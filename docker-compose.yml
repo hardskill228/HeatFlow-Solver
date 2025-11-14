@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  api1:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: heatflow_api1
+    networks:
+      - backend_net
+
+  api2:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: heatflow_api2
+    networks:
+      - backend_net
+
+  nginx:
+    image: nginx:stable-alpine
+    container_name: heatflow_nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api1
+      - api2
+    networks:
+      - backend_net
+
+networks:
+  backend_net:
+    driver: bridge
+
+# Notes:
+# - Each api service runs the same image; nginx load-balances between api1 and api2.
+# - To scale more, you can add additional api services or use Docker Swarm / Kubernetes
+#   for replica management.
+# docker-compose removed — project now runs as a local uvicorn service
