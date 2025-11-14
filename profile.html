@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Profile — HeatFlow Solver</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header class="app-header" style="width:100%;max-width:980px;margin:18px auto 0;">
+    <h1 style="font-size:1.6rem;margin:0;color:var(--accent-2);">HeatFlow Solver</h1>
+    <div id="userHeader" style="color:var(--card-contrast);font-weight:600">User: <span id="p-username">User</span></div>
+  </header>
+
+  <main class="profile-container">
+    <section class="profile-card">
+      <h1 id="p-username">User</h1>
+      <p>Registered: <span id="p-created">N/A</span></p>
+      <p>Password: <span id="p-password">••••••••</span> <button id="showPwd">Show</button></p>
+      <hr />
+      <h2>Your Sessions</h2>
+      <div id="sessions" class="sessions-list">Loading...</div>
+      <div id="session-detail" style="display:none;margin-top:16px;">
+        <h3>Session <span id="sd-taskid"></span></h3>
+        <p>Status: <span id="sd-status"></span></p>
+        <p>Duration: <span id="sd-duration"></span> sec</p>
+        <div>
+          <canvas id="tempChart" width="800" height="280" style="background:#fff;border-radius:8px"></canvas>
+        </div>
+        <div style="margin-top:12px;">
+          <canvas id="cpuChart" width="800" height="160" style="background:#fff;border-radius:8px"></canvas>
+        </div>
+      </div>
+      <p><a href="/app">Back to App</a></p>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    (async function(){
+      const token = sessionStorage.getItem('hf_token');
+      if (!token) { window.location.href = '/'; return; }
+      // load profile
+      const resp = await fetch('/api/account/profile', {headers:{'Authorization':'Bearer '+token}});
+      if (!resp.ok) { document.getElementById('sessions').textContent='Failed to load profile'; return; }
+      const profile = await resp.json();
+      document.getElementById('p-username').textContent = profile.username;
+      document.getElementById('p-created').textContent = new Date(profile.created_at*1000).toLocaleString ? new Date(profile.created_at*1000).toLocaleString(): 'N/A';
+      // password cannot be shown (we store only hashes) — show toggle that explains
+      document.getElementById('showPwd').addEventListener('click', ()=>{
+        alert('For security we store only a hashed password; cannot display the original password.');
+      });
+
+      // load sessions
+      const resp2 = await fetch('/api/account/history', {headers:{'Authorization':'Bearer '+token}});
+      if (!resp2.ok) { document.getElementById('sessions').textContent='Failed to load sessions'; return; }
+      const sessions = await resp2.json();
+      const list = document.getElementById('sessions');
+      list.innerHTML = '';
+      if (!sessions || sessions.length===0) list.textContent = 'No sessions yet.';
+      sessions.forEach(s => {
+        const el = document.createElement('div');
+        el.className = 'session-item';
+        el.innerHTML = `<div style="flex:1"><strong>${s.task_id}</strong> — <em style='color:var(--muted)'>${s.status}</em> — ${s.result ? ('<strong>' + s.result.max_temperature_c + ' C</strong>') : 'N/A'}</div> <div><button data-id='${s.task_id}'>View</button></div>`;
+        list.appendChild(el);
+        const btn = el.querySelector('button');
+        if (btn) { btn.className = 'btn btn-ghost'; btn.style.padding='8px 12px'; }
+        el.querySelector('button').addEventListener('click', ()=> showSession(s));
+      });
+
+      function showSession(s){
+        document.getElementById('session-detail').style.display = 'block';
+        document.getElementById('sd-taskid').textContent = s.task_id;
+        document.getElementById('sd-status').textContent = s.status;
+        const dur = (s.end_time && s.start_time) ? (s.end_time - s.start_time).toFixed(2) : (s.result && s.result.execution_time_seconds) || 'N/A';
+        document.getElementById('sd-duration').textContent = dur;
+        // draw temp chart from s.result.time_series
+        const ts = (s.result && s.result.time_series) || [];
+        if (ts.length===0) { alert('No time series available for this session'); return; }
+
+        // prepare labels and datasets
+        const labels = ts.map((p,i)=>{
+          if (p.timestamp) return new Date(p.timestamp*1000).toLocaleTimeString();
+          return 't' + i;
+        });
+        const temps = ts.map(p=>p.temperature_c);
+        const cpus = ts.map(p=>p.cpu_percent);
+
+        // Temperature chart
+        const tempCtx = document.getElementById('tempChart').getContext('2d');
+        if (window.tempChartInstance) window.tempChartInstance.destroy();
+        window.tempChartInstance = new Chart(tempCtx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Temperature (°C)',
+              data: temps,
+              borderColor: '#e11d48',
+              backgroundColor: 'rgba(225,29,72,0.12)',
+              pointRadius: 0,
+              fill: true,
+              tension: 0.2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: { display: true, title: { display: true, text: 'Time' } },
+              y: { display: true, title: { display: true, text: '°C' }, beginAtZero: false }
+            },
+            plugins: { legend:{display:true}, tooltip:{mode:'index',intersect:false} }
+          }
+        });
+
+        // CPU chart
+        const cpuCtx = document.getElementById('cpuChart').getContext('2d');
+        if (window.cpuChartInstance) window.cpuChartInstance.destroy();
+        window.cpuChartInstance = new Chart(cpuCtx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'CPU (%)',
+              data: cpus,
+              borderColor: '#06b6d4',
+              backgroundColor: 'rgba(6,182,212,0.12)',
+              pointRadius: 0,
+              fill: true,
+              tension: 0.2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: { display: true, title: { display: true, text: 'Time' } },
+              y: { display: true, title: { display: true, text: '%' }, min:0, max:100 }
+            },
+            plugins: { legend:{display:true}, tooltip:{mode:'index',intersect:false} }
+          }
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>HeatFlow Solver — Login</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <main class="login-container">
+    <form id="loginForm" class="login-box" autocomplete="off">
+      <h1>Sign in</h1>
+      <label class="field">
+        <span>Username</span>
+        <input id="username" name="username" type="text" autocomplete="username" required />
+      </label>
+
+      <label class="field">
+        <span>Password</span>
+        <input id="password" name="password" type="password" autocomplete="current-password" required />
+      </label>
+
+      <div class="actions">
+        <button type="submit" id="loginBtn" class="btn btn-primary" style="flex:1;justify-content:center;padding:14px 18px;font-size:18px">Далі &#8594;</button>
+      </div>
+
+      <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px">
+        <button type="button" id="registerBtn" class="btn btn-accent-alt" style="justify-content:center;padding:12px 14px">Register</button>
+      </div>
+
+      <p id="error" class="error" aria-live="polite"></p>
+
+      <p class="note">Demo login: any non-empty username & password. This is client-side only.</p>
+    </form>
+  </main>
+
+  <script>
+  // Inlined login logic to avoid 404 when static files aren't mounted on the server.
+  // Simple client-side login handling (demo only)
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("loginForm");
+    const err = document.getElementById("error");
+
+  form.addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      err.textContent = "";
+
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      if (!username || !password) {
+        err.textContent = "Please enter both username and password.";
+        return;
+      }
+
+      // Call backend login endpoint
+      try {
+        const resp = await fetch('/api/auth/login', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({username, password})
+        });
+        if (!resp.ok) {
+          const json = await resp.json().catch(()=>({detail:'Login failed'}));
+          err.textContent = json.detail || 'Login failed';
+          return;
+        }
+        const data = await resp.json();
+        sessionStorage.setItem('hf_username', data.username);
+        sessionStorage.setItem('hf_token', data.token);
+        // Redirect to app
+        window.location.href = '/app';
+      } catch (e) {
+        err.textContent = 'Network error';
+      }
+    });
+  });
+  
+  // Register button handler
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const reg = document.getElementById('registerBtn');
+    if (reg) reg.addEventListener('click', async () => {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const err = document.getElementById('error'); err.textContent = '';
+      if (!username || !password) { err.textContent='Enter username and password to register'; return; }
+      try {
+        const resp = await fetch('/api/auth/register', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username,password})});
+        if (!resp.ok) { const j = await resp.json().catch(()=>({detail:'Register failed'})); err.textContent = j.detail || 'Register failed'; return; }
+        err.style.color = 'lightgreen'; err.textContent = 'Registered. Now click Login.';
+      } catch(e){ err.textContent='Network error'; }
+    });
+  });
+  </script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+/* Modern dark-red theme, unified across pages
+   - Uses Montserrat font
+   - Dark red / burgundy / near-black background
+   - Cards are slightly lighter with white content
+   - Buttons have neon/red glow, hover and active effects
+   - Responsive layout
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+
+:root{
+  --bg-1: #170609;   /* very dark */
+  --bg-2: #2b0b0f;   /* deep burgundy */
+  --card: #0f0b0c;   /* card background (very dark) */
+  --card-contrast: #ffffff; /* white for text inside cards */
+  --accent: #c41d2b; /* vivid red */
+  --accent-2: #ff6b6b; /* lighter red for highlights */
+  --muted: #9aa0a6;
+  --glass: rgba(255,255,255,0.03);
+  --radius: 14px;
+  --shadow: 0 10px 30px rgba(11,8,10,0.6);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:'Montserrat',system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;color:var(--card-contrast);background:linear-gradient(180deg,var(--bg-2) 0%, var(--bg-1) 100%);-webkit-font-smoothing:antialiased}
+
+/* Global containers */
+.login-container, .profile-container, .app-body{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px}
+
+/* Card base - used by login-box, profile-card, card */
+.card, .login-box, .profile-card{width:100%;max-width:980px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.12));padding:28px;border-radius:calc(var(--radius));box-shadow:var(--shadow);border:1px solid var(--glass)}
+
+.login-box{max-width:540px}
+.login-box h1{margin:0 0 12px;font-size:1.6rem;color:var(--accent-2)}
+
+.field{display:block;margin:12px 0}
+.field span{display:block;margin-bottom:8px;color:var(--muted);font-size:0.95rem}
+.field input{width:100%;padding:14px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:#fff;color:#071018;outline:none;font-size:15px}
+.field input::placeholder{color:#9aa0a6}
+.field input:focus{box-shadow:0 8px 30px rgba(196,29,43,0.12);border-color:var(--accent)}
+
+/* Buttons: unified style */
+.btn{border:none;padding:12px 20px;border-radius:999px;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;gap:10px;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease}
+.btn:focus{outline:none;box-shadow:0 0 0 4px rgba(196,29,43,0.12)}
+.btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;box-shadow:0 8px 30px rgba(196,29,43,0.28), 0 0 18px rgba(255,107,107,0.06)}
+.btn-accent-alt{background:linear-gradient(90deg,#9b1220,#c41d2b);color:#fff}
+.btn-success{background:#0ea5a0;color:#fff}
+.btn-danger{background:#b91c1c;color:#fff}
+.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--card-contrast)}
+.btn-secondary{background:#2f2f33;color:#fff}
+.btn:hover{transform:translateY(-2px);box-shadow:0 18px 40px rgba(196,29,43,0.18)}
+.btn:active{transform:translateY(0) scale(.995);box-shadow:0 6px 16px rgba(0,0,0,0.35), inset 0 2px 6px rgba(0,0,0,0.25)}
+
+/* subtle neon outline for primary hover */
+.btn-primary:hover{box-shadow:0 18px 50px rgba(196,29,43,0.24), 0 0 30px rgba(255,107,107,0.06)}
+
+.error{color:var(--accent-2);margin-top:12px;min-height:1.25em}
+.note{color:var(--muted);font-size:0.92rem;margin-top:12px}
+
+/* Header and app layout */
+.app-header{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;background:transparent}
+.app-header h1{margin:0;font-size:1.6rem;color:var(--accent-2);letter-spacing:0.6px}
+.app-header #userHeader, .app-header #userInfo { color: #ffffff; font-weight:600; opacity:0.95 }
+.app-header a.profile-pill{background:rgba(255,255,255,0.08);padding:8px 14px;border-radius:999px;color:#fff;text-decoration:none;font-weight:700}
+.app-body{padding:24px}
+
+.card{max-width:960px;margin:8px auto;padding:20px}
+
+/* Progress bar track and fill
+   - main progress bar used by #progress-bar and dynamic pb-* ids
+*/
+.w-full.bg-gray-200.rounded-full.h-3\.5{background:linear-gradient(90deg, rgba(255,255,255,0.03), rgba(0,0,0,0.05));height:14px;border-radius:999px}
+#progress-bar, [id^="pb-"]{transition:width 450ms cubic-bezier(.2,.9,.2,1);background:linear-gradient(90deg,var(--accent-2),var(--accent));height:100%;border-radius:999px;box-shadow:0 6px 20px rgba(196,29,43,0.18), inset 0 -6px 16px rgba(0,0,0,0.2)}
+
+/* ensure progress percentage text is readable */
+[id^="pt-"]{color:#071018;font-weight:700;padding-left:6px}
+
+/* Profile card tweaks */
+.profile-card{max-width:820px}
+.session-item{padding:12px;border-radius:10px;margin-bottom:10px;background:rgba(255,255,255,0.02);display:flex;justify-content:space-between;align-items:center;border:1px solid rgba(255,255,255,0.03)}
+
+/* Charts */
+canvas{display:block;max-width:100%;border-radius:8px}
+
+/* task card for concurrent tasks */
+#tasksContainer{margin-top:20px;display:flex;flex-direction:column;gap:14px}
+.task-card{background:#f3f4f6;padding:12px;border-radius:12px;border:1px solid rgba(0,0,0,0.06);color:#0f172a;} 
+.task-card .task-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.task-card .progress-wrap{display:flex;align-items:center;gap:12px}
+
+/* Position auxiliary task cards in a right sidebar on larger screens */
+@media (min-width: 900px) {
+  #tasksContainer{position:fixed;right:24px;top:84px;width:300px;max-height:70vh;overflow:auto;padding:6px}
+  .task-card{width:100%;}
+}
+@media (max-width: 899px){
+  #tasksContainer{position:static;width:100%;}
+}
+
+/* make main progress shorter on wide screens so it doesn't underlap the sidebar */
+@media (min-width: 900px){
+  .main-progress-track{margin-right:340px}
+}
+
+/* small utilities */
+.font-mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', monospace}
+.text-sm{font-size:0.95rem}
+
+/* Responsive tweaks */
+@media (max-width: 800px){
+  .login-box, .card, .profile-card{padding:20px;border-radius:12px}
+  .field input{padding:12px}
+  .btn{padding:12px 16px}
+  #tempChart, #cpuChart{height:auto!important}
+}
+
+@media (max-width:420px){
+  .login-box{padding:16px}
+  .app-body{padding:12px}
+  .btn{font-size:14px}
+}
+
+/* keep css clean & modular for easy extension */
+/* Basic styles for login + app pages (responsive, minimal) */
+:root{
+  --bg:#5a0d12; /* dark red background tone */
+  --card:#ffffff; /* white card background */
+  --accent:#7b0f15; /* dark red accent */
+  --accent-2:#b2222f; /* lighter red */
+  --muted:#6b6b6b;
+  --danger:#b00020;
+  --text:#111827;
+  --radius:14px;
+  --maxw:520px;
+  font-synthesis: none;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;color:var(--text);background:linear-gradient(180deg,var(--bg) 0%, #3d0b10 100%);} 
+
+.login-container{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.login-box{width:100%;max-width:var(--maxw);background:var(--card);padding:30px;border-radius:calc(var(--radius) + 6px);box-shadow:0 14px 40px rgba(0,0,0,0.45);border:1px solid rgba(0,0,0,0.06)}
+.login-box h1{margin:0 0 12px;font-size:1.6rem;color:var(--accent-2)}
+.field{display:block;margin:12px 0}
+.field span{display:block;margin-bottom:8px;color:var(--muted);font-size:0.9rem}
+.field input{width:100%;padding:14px 16px;border-radius:12px;border:1px solid rgba(0,0,0,0.06);background:#fff;color:var(--text);outline:none;box-shadow:inset 0 1px 2px rgba(16,24,40,0.03)}
+.field input:focus{box-shadow:0 6px 24px rgba(139,15,26,0.12);border-color:var(--accent)}
+.actions{display:flex;justify-content:space-between;gap:10px;margin-top:18px}
+/* button base */
+.btn{border:none;padding:12px 22px;border-radius:999px;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;gap:10px;box-shadow:0 6px 18px rgba(0,0,0,0.15)}
+.btn:focus{outline:2px solid rgba(123,30,45,0.12)}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-accent-alt{background:var(--accent-2);color:#fff}
+.btn-success{background:#16a34a;color:#fff}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-ghost{background:transparent;border:1px solid rgba(0,0,0,0.06);color:var(--text)}
+.btn-secondary{background:#6b7280;color:#fff}
+.btn:hover{opacity:0.98}
+.error{color:var(--danger);margin-top:12px;min-height:1.25em}
+.note{color:var(--muted);font-size:0.85rem;margin-top:12px}
+
+/* App page */
+.app-header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:transparent}
+.app-body{padding:28px;display:flex;align-items:flex-start;justify-content:center}
+
+/* Center the main card */
+.card{max-width:1000px;margin:8px auto;padding:18px;background:var(--card);border-radius:12px}
+
+/* Progress bar styles */
+.w-full.bg-gray-200.rounded-full.h-3\.5{background:#f3f4f6}
+#progress-bar{transition:width 600ms cubic-bezier(.2,.8,.2,1);background:linear-gradient(90deg,var(--accent-2),var(--accent));height:100%}
+
+/* Profile page layout */
+.profile-container{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px}
+.profile-card{width:100%;max-width:760px;background:var(--card);padding:28px;border-radius:12px;box-shadow:0 14px 40px rgba(0,0,0,0.35);border:1px solid rgba(0,0,0,0.06)}
+.sessions-list .session-item{padding:12px;border-radius:10px;margin-bottom:10px;background:#fafafa;display:flex;justify-content:space-between;align-items:center;border:1px solid rgba(0,0,0,0.04)}
+
+/* Chart canvas tweaks */
+canvas{display:block;max-width:100%;}
+
+/* task list container on app page for multiple tasks */
+#tasksContainer{margin-top:16px;display:flex;flex-direction:column;gap:12px}
+.task-card{background:#fff;padding:12px;border-radius:10px;border:1px solid rgba(0,0,0,0.06);box-shadow:0 6px 18px rgba(2,6,23,0.06);}
+.task-card .task-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.task-card .progress-wrap{display:flex;align-items:center;gap:12px}

@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>HeatFlow Solver — App</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+        <script>
+            // Require login token: if no token present, redirect to login page
+            (function(){
+                try {
+                    const token = sessionStorage.getItem('hf_token');
+                    const username = sessionStorage.getItem('hf_username');
+                    if (!token || !username) {
+                        window.location.href = '/';
+                    }
+                } catch(e) { window.location.href = '/'; }
+            })();
+        </script>
+
+  <header class="app-header">
+    <h1>HeatFlow Solver</h1>
+    <div id="userInfo"></div>
+    <a id="profileBtn" class="btn btn-secondary" href="/profile">Profile</a>
+    <button id="logoutBtn" class="btn btn-ghost">Logout</button>
+  </header>
+    
+
+  <main class="app-body">
+        <div class="card p-6 bg-gray-50 rounded-xl mb-8 border border-gray-200">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Налаштування Задачі</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label for="nodes" class="block text-sm font-medium text-gray-700">Кількість Вузлів (Nodes):</label>
+                    <input type="number" id="nodes" value="50000" min="1000" max="100000"
+                           class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-red-500 focus:border-red-500">
+                    <p class="text-xs text-gray-500 mt-1">MAX 100,000 (Вимога №1)</p>
+                </div>
+                <div>
+                    <label for="iterations" class="block text-sm font-medium text-gray-700">Ітерації Симуляції:</label>
+                    <input type="number" id="iterations" value="10000" min="10" max="1000000"
+                           class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-red-500 focus:border-red-500">
+                    <p class="text-xs text-gray-500 mt-1">Визначає час, необхідний для обчислення.</p>
+                </div>
+            </div>
+
+        <button id="startButton" onclick="startTask()"
+            class="btn btn-primary" style="width:100%;padding:14px 18px;font-size:16px;">
+                Запустити Обчислення (POST /api/tasks/start)
+            </button>
+            <p id="message-box" class="text-center mt-3 text-sm font-medium text-red-500"></p>
+        </div>
+
+        <div class="card p-6 bg-white rounded-xl shadow-inner border border-red-200">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Моніторинг Завдання</h2>
+
+            <div class="space-y-2 text-sm">
+                <p><strong>Task ID:</strong> <span id="task-id" class="font-mono text-xs text-blue-600">N/A</span></p>
+                <p><strong>Status:</strong> <span id="task-status" class="font-bold text-gray-600">IDLE</span></p>
+                <p><strong>Current Stage:</strong> <span id="task-stage" class="text-gray-600">Ready to start</span></p>
+            </div>
+
+            <div class="mt-4">
+                <p class="font-semibold text-gray-700 mb-2">Progress:</p>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                    <div id="progress-percent" style="font-weight:700;color:var(--accent-2)">0%</div>
+                    <div id="progress-stage" style="font-size:0.9rem;color:var(--muted)"></div>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3.5 mb-2 main-progress-track">
+                    <div id="progress-bar" class="bg-blue-500 h-3.5 rounded-full text-xs font-medium text-white text-center p-0.5 leading-none" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div id="result-display" class="hidden mt-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+                <h3 class="font-bold text-blue-800 mb-2">Результат Обчислення:</h3>
+                <p class="text-sm text-blue-700">Максимальна Температура (C): <span id="max-temp" class="font-mono">N/A</span></p>
+                <p class="text-sm text-blue-700">Середня Температура (C): <span id="avg-temp" class="font-mono">N/A</span></p>
+                <p class="text-sm text-blue-700">Час виконання (сек): <span id="exec-time" class="font-mono">N/A</span></p>
+                <img id="result-image" src="https://placehold.co/400x100/f3f4f6/374151?text=Simulation+Result" 
+                     alt="Simulation Result Placeholder" 
+                     class="mt-4 rounded-lg border border-gray-300 mx-auto" style="max-width: 100%;"/>
+            </div>
+
+            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mt-6">
+        <button id="cancelButton" disabled
+            class="btn btn-danger" style="flex:1;padding:10px 12px;">
+                    Скасувати Завдання (POST /cancel)
+                </button>
+        <button id="pauseResumeButton" disabled class="btn btn-ghost" style="margin-left:12px;padding:10px 12px;">Stop</button>
+                <!-- history moved to profile panel -->
+            </div>
+
+            <p class="text-sm mt-3 text-center">WebSocket Status: <span id="ws-status" class="font-bold text-gray-500">Disconnected</span></p>
+        </div>
+        <div id="tasksContainer"></div>
+        
+        <pre id="history-output" class="hidden mt-8 p-4 bg-gray-800 text-green-300 text-xs rounded-lg overflow-auto max-h-96"></pre>
+        
+    </div>
+
+    <script>
+        // Фінальні, чисті URL для локального запуску
+        const BASE_URL = window.location.origin; // http://127.0.0.1:8000
+        const API_TASKS_URL = BASE_URL + '/api/tasks';
+        const WS_BASE_URL = 'ws://' + window.location.host; // ws://127.0.0.1:8000
+        
+    // Support multiple concurrent tasks: map of taskId -> {ws, elements, status}
+    const tasksMap = {};
+    let mainTaskId = null; // first running task occupies the main monitor
+
+            const ui = {
+            startButton: document.getElementById('startButton'),
+            cancelButton: document.getElementById('cancelButton'),
+            taskId: document.getElementById('task-id'),
+            taskStatus: document.getElementById('task-status'),
+            taskStage: document.getElementById('task-stage'),
+            progressBar: document.getElementById('progress-bar'),
+            progressPercent: document.getElementById('progress-percent'),
+            progressStageLabel: document.getElementById('progress-stage'),
+            messageBox: document.getElementById('message-box'),
+            wsStatus: document.getElementById('ws-status'),
+            historyOutput: document.getElementById('history-output'),
+            nodes: document.getElementById('nodes'),
+            iterations: document.getElementById('iterations'),
+            // UI для Результатів (НОВІ ЕЛЕМЕНТИ)
+            resultDisplay: document.getElementById('result-display'),
+            maxTemp: document.getElementById('max-temp'),
+            avgTemp: document.getElementById('avg-temp'),
+            execTime: document.getElementById('exec-time'),
+            resultImage: document.getElementById('result-image')
+        };
+        
+        // Допоміжна функція для оновлення результатів в UI
+        function updateResultUI(result) {
+            if (result && result.max_temperature_c !== undefined) {
+                // Виводимо дані
+                ui.maxTemp.textContent = result.max_temperature_c;
+                ui.avgTemp.textContent = result.average_temperature_c;
+                ui.execTime.textContent = result.execution_time_seconds;
+                
+                // Оновлюємо заглушку зображення, включаючи результат у текст
+                ui.resultImage.src = `https://placehold.co/400x150/10B981/ffffff?text=Max+Temp:${result.max_temperature_c}C`;
+                
+                ui.resultDisplay.classList.remove('hidden');
+            } else {
+                // Ховаємо блок, якщо результату немає
+                ui.resultDisplay.classList.add('hidden');
+            }
+        }
+
+        function promoteToMain(taskId) {
+            // set the clicked task as mainTaskId and wire main UI to it
+            mainTaskId = taskId;
+            const t = tasksMap[taskId];
+            if (!t) return;
+            // replace main monitor elements mapping
+            tasksMap[taskId].elements.title = ui.taskId;
+            tasksMap[taskId].elements.wsStatus = ui.wsStatus;
+            tasksMap[taskId].elements.cancelBtn = ui.cancelButton;
+            tasksMap[taskId].elements.progressBar = ui.progressBar;
+            tasksMap[taskId].elements.progressText = ui.progressPercent;
+            tasksMap[taskId].elements.stage = ui.taskStage;
+
+            // bind main cancel and pause/resume
+            ui.cancelButton.disabled = false;
+            ui.cancelButton.onclick = () => cancelTask(taskId);
+            ui.pauseResumeButton.disabled = false;
+            ui.pauseResumeButton.onclick = async () => {
+                if (t.status === 'RUNNING') {
+                    const ok = await pauseTaskApi(taskId);
+                    if (ok) { t.status = 'PAUSED'; ui.pauseResumeButton.textContent = 'Resume'; }
+                } else if (t.status === 'PAUSED') {
+                    const ok = await resumeTaskApi(taskId);
+                    if (ok) { t.status = 'RUNNING'; ui.pauseResumeButton.textContent = 'Stop'; }
+                }
+            };
+            // update main monitor display now
+            setStatus(taskId, t.status || 'PENDING', t.elements.stage ? t.elements.stage.textContent : '', t.elements.progressBar ? parseInt(t.elements.progressBar.style.width || 0) : 0, null);
+        }
+
+
+        function setStatus(id, status, stage, progress, result = null) {
+            ui.taskId.textContent = id || 'N/A';
+            ui.taskStatus.textContent = status;
+            ui.taskStage.textContent = stage;
+            
+            // Якщо Progress не передано, залишаємо його як є
+            if (progress !== undefined && progress !== null) { 
+                const p = Math.floor(progress) || 0;
+                ui.progressBar.style.width = `${p}%`;
+                if (ui.progressPercent) ui.progressPercent.textContent = `${p}%`;
+                if (ui.progressStageLabel) ui.progressStageLabel.textContent = stage || '';
+            } else if (status === 'IDLE' || status === 'FAILED' || status === 'CANCELLED') {
+                // Скидаємо лише при фінальному статусі
+                ui.progressBar.style.width = `0%`;
+                if (ui.progressPercent) ui.progressPercent.textContent = `0%`;
+            }
+
+            // ОНОВЛЕННЯ РЕЗУЛЬТАТУ (викликається для оновлення)
+            updateResultUI(result);
+
+            ui.cancelButton.disabled = !id || status === 'COMPLETED' || status === 'FAILED' || status === 'CANCELLED';
+            // Pause/Resume button behavior
+            if (ui.pauseResumeButton) {
+                if (!id || status === 'COMPLETED' || status === 'FAILED' || status === 'CANCELLED') {
+                    ui.pauseResumeButton.disabled = true;
+                } else if (status === 'RUNNING') {
+                    ui.pauseResumeButton.disabled = false; ui.pauseResumeButton.textContent = 'Stop';
+                } else if (status === 'PAUSED') {
+                    ui.pauseResumeButton.disabled = false; ui.pauseResumeButton.textContent = 'Resume';
+                } else {
+                    ui.pauseResumeButton.disabled = true;
+                }
+            }
+            
+            ui.taskStatus.className = 'font-bold ' + 
+                (status === 'PENDING' || status === 'RUNNING' || status === 'CANCELLATION_REQUESTED' ? 'text-yellow-600' : 
+                 status === 'COMPLETED' ? 'text-green-600' : 
+                 status === 'FAILED' || status === 'CANCELLED' ? 'text-red-600' : 'text-gray-600');
+        }
+
+        // ====================================================================
+        // 1. WebSocket Logic (Вимога №2)
+        // ====================================================================
+
+    function connectWebSocket(taskId) {
+            // create per-task WebSocket and store in tasksMap
+            setTimeout(()=>{
+                try {
+                    const socket = new WebSocket(WS_BASE_URL + '/ws/' + taskId);
+                    tasksMap[taskId].ws = socket;
+                    const el = tasksMap[taskId].elements;
+                    el.wsStatus.textContent = 'Connecting...';
+                    el.wsStatus.className = 'font-bold text-yellow-500';
+
+                    socket.onopen = () => {
+                        el.wsStatus.textContent = 'Connected';
+                        el.wsStatus.className = 'font-bold text-green-600';
+                    };
+
+                    socket.onmessage = (event) => {
+                        const data = JSON.parse(event.data);
+                        if (data.status) {
+                            // update that task card (and main monitor if this is the main task)
+                            updateTaskCard(taskId, data.status, data.stage, data.progress, data.result);
+                        }
+                        if (data.status === 'COMPLETED' || data.status === 'FAILED' || data.status === 'CANCELLED') {
+                            socket.close();
+                        }
+                    };
+
+                    socket.onclose = () => {
+                        el.wsStatus.textContent = 'Disconnected';
+                        el.wsStatus.className = 'font-bold text-gray-500';
+                    };
+
+                    socket.onerror = (err) => {
+                        console.error('WS error', err);
+                        el.wsStatus.textContent = 'Error';
+                        el.wsStatus.className = 'font-bold text-red-600';
+                    };
+                } catch(e) {
+                    console.error('Failed to create WS', e);
+                }
+            }, 50);
+        }
+
+        // ====================================================================
+        // 2. Task Management API Calls
+        // ====================================================================
+
+        async function startTask() {
+            ui.messageBox.textContent = '';
+            ui.startButton.disabled = true;
+            // Ініціалізуємо IDLE-статус без прогресу та результату
+            setStatus(null, 'IDLE', 'Requesting start...', 0, null); 
+            
+            const nodes = parseInt(ui.nodes.value);
+            const iterations = parseInt(ui.iterations.value);
+
+            // Клієнтська валідація
+            if (nodes > 100000) {
+                ui.messageBox.textContent = 'Помилка: Кількість вузлів перевищує ліміт (100,000)!';
+                ui.startButton.disabled = false;
+                return;
+            }
+
+            try {
+                // Виклик API: http://127.0.0.1:8000/api/tasks/start
+                const headers = { 'Content-Type': 'application/json' };
+                const token = sessionStorage.getItem('hf_token');
+                if (token) headers['Authorization'] = 'Bearer ' + token;
+                const response = await fetch(`${API_TASKS_URL}/start`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ nodes, iterations })
+                });
+
+                const data = await response.json();
+                if (response.status === 200 || response.status === 202) {
+                    const taskId = data.task_id;
+                    // Decide if this task should occupy the main monitor or be an auxiliary card
+                    const mainFree = !mainTaskId || (tasksMap[mainTaskId] && ['COMPLETED','FAILED','CANCELLED'].includes(tasksMap[mainTaskId].status));
+                    const assignToMain = mainFree;
+                    addTaskCard(taskId, data.status, assignToMain);
+                    connectWebSocket(taskId);
+                    ui.messageBox.textContent = 'Завдання успішно відправлено! Connecting WS...';
+                } else if (response.status === 400) {
+                    ui.messageBox.textContent = `Помилка API: ${data.detail}`;
+                    setStatus(null, 'IDLE', 'Validation failed', 0, null);
+                } else {
+                    ui.messageBox.textContent = 'Невідома помилка при запуску завдання.';
+                }
+
+            } catch (error) {
+                console.error("Fetch Error:", error);
+                ui.messageBox.textContent = 'Помилка мережі. Перевірте, чи запущений Uvicorn сервер.';
+                setStatus(null, 'IDLE', 'Network Error', 0, null);
+            } finally {
+                ui.startButton.disabled = false;
+            }
+        }
+
+        async function cancelTask(taskId) {
+            if (!taskId) return;
+            const el = tasksMap[taskId] && tasksMap[taskId].elements;
+            if (el) el.cancelBtn.disabled = true;
+            try {
+                const headers = {};
+                const token = sessionStorage.getItem('hf_token');
+                if (token) headers['Authorization'] = 'Bearer ' + token;
+                const response = await fetch(`${API_TASKS_URL}/${taskId}/cancel`, { method: 'POST', headers });
+                const data = await response.json().catch(()=>({message:'cancel request sent'}));
+                if (response.ok) {
+                    ui.messageBox.textContent = data.message || 'Cancel requested';
+                } else {
+                    ui.messageBox.textContent = `Помилка скасування: ${data.message || data.detail}`;
+                }
+            } catch (error) {
+                ui.messageBox.textContent = 'Помилка мережі при скасуванні.';
+            }
+        }
+
+        async function pauseTaskApi(taskId) {
+            const headers = {};
+            const token = sessionStorage.getItem('hf_token');
+            if (token) headers['Authorization'] = 'Bearer ' + token;
+            try {
+                const resp = await fetch(`${API_TASKS_URL}/${taskId}/pause`, { method: 'POST', headers });
+                return resp.ok;
+            } catch(e) { return false; }
+        }
+
+        async function resumeTaskApi(taskId) {
+            const headers = {};
+            const token = sessionStorage.getItem('hf_token');
+            if (token) headers['Authorization'] = 'Bearer ' + token;
+            try {
+                const resp = await fetch(`${API_TASKS_URL}/${taskId}/resume`, { method: 'POST', headers });
+                return resp.ok;
+            } catch(e) { return false; }
+        }
+
+        function addTaskCard(taskId, initialStatus='PENDING') {
+            const container = document.getElementById('tasksContainer');
+            // if main monitor is free (or requested), bind this task to the main UI instead of creating a new small card
+            const isMain = arguments.length >= 3 ? arguments[2] : false;
+            if (isMain) {
+                mainTaskId = taskId;
+                // Use main UI elements for this task
+                tasksMap[taskId] = { ws: null, status: initialStatus, elements: {
+                    card: null,
+                    title: ui.taskId,
+                    wsStatus: ui.wsStatus,
+                    cancelBtn: ui.cancelButton,
+                    progressBar: ui.progressBar,
+                    progressText: ui.progressText,
+                    stage: ui.taskStage
+                }};
+                // ensure main cancel calls cancelTask with this task id
+                ui.cancelButton.disabled = false;
+                ui.cancelButton.onclick = () => cancelTask(taskId);
+                // set initial status on main monitor
+                setStatus(taskId, initialStatus, 'Queued (Async Pool)', 0, null);
+                return;
+            }
+
+            // Auxiliary task card (sidebar)
+            const card = document.createElement('div');
+            card.className = 'task-card';
+            const meta = document.createElement('div'); meta.className='task-meta';
+            const title = document.createElement('div'); title.innerHTML = `<strong>Task:</strong> <span class="font-mono">${taskId}</span>`;
+            const right = document.createElement('div');
+            const wsStatus = document.createElement('span'); wsStatus.textContent='Connecting...'; wsStatus.className='font-bold text-yellow-500';
+            const collapseBtn = document.createElement('button'); collapseBtn.className='btn btn-ghost'; collapseBtn.textContent='▾'; collapseBtn.title='Collapse/Expand'; collapseBtn.style.marginLeft='8px';
+            const stopResumeBtn = document.createElement('button'); stopResumeBtn.className='btn btn-ghost'; stopResumeBtn.textContent='Stop'; stopResumeBtn.style.marginLeft='8px';
+            const cancelBtn = document.createElement('button'); cancelBtn.className='btn btn-danger'; cancelBtn.textContent='Cancel';
+            cancelBtn.addEventListener('click', ()=>cancelTask(taskId));
+            right.appendChild(wsStatus); right.appendChild(collapseBtn); right.appendChild(stopResumeBtn); right.appendChild(cancelBtn);
+            meta.appendChild(title); meta.appendChild(right);
+
+            const progressWrap = document.createElement('div'); progressWrap.className='progress-wrap';
+            // percent label outside the bar to avoid overlap
+            progressWrap.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div id="pt-${taskId}" style="font-weight:700;color:var(--accent-2);">0%</div><div style="font-size:0.9rem;color:var(--muted)"></div></div><div style="flex:1"><div class="w-full bg-gray-200 rounded-full h-3.5"><div id="pb-${taskId}" class="bg-blue-500 h-3.5 rounded-full" style="width:0%"></div></div></div>`;
+
+            const stage = document.createElement('div'); stage.className='text-sm'; stage.textContent='Queued';
+
+            card.appendChild(meta); card.appendChild(progressWrap); card.appendChild(stage);
+            container.prepend(card);
+
+            // wire elements and handlers
+            const progressBarEl = document.getElementById('pb-'+taskId);
+            const progressTextEl = document.getElementById('pt-'+taskId);
+            tasksMap[taskId] = { ws: null, status: initialStatus, collapsed: false, elements: { card, title, wsStatus, cancelBtn, stopResumeBtn, collapseBtn, progressBar: progressBarEl, progressText: progressTextEl, stage } };
+
+            // collapse/expand handler (initial state expanded)
+            collapseBtn.addEventListener('click', (ev)=>{
+                ev.stopPropagation();
+                const collapsed = tasksMap[taskId].collapsed = !tasksMap[taskId].collapsed;
+                if (collapsed) {
+                    // hide progress and stage
+                    progressWrap.style.display = 'none';
+                    stage.style.display = 'none';
+                    collapseBtn.textContent = '▸';
+                } else {
+                    progressWrap.style.display = '';
+                    stage.style.display = '';
+                    collapseBtn.textContent = '▾';
+                }
+            });
+
+            // stop/resume button - already bound earlier when created (placeholder), but add safety
+            stopResumeBtn.addEventListener('click', async (ev)=>{
+                ev.stopPropagation();
+                if (tasksMap[taskId].status === 'RUNNING') {
+                    await pauseTaskApi(taskId);
+                    tasksMap[taskId].status = 'PAUSED';
+                    stopResumeBtn.textContent = 'Resume';
+                } else if (tasksMap[taskId].status === 'PAUSED') {
+                    await resumeTaskApi(taskId);
+                    tasksMap[taskId].status = 'RUNNING';
+                    stopResumeBtn.textContent = 'Stop';
+                }
+            });
+
+            // clicking a card promotes it to main monitor
+            card.addEventListener('click', () => {
+                promoteToMain(taskId);
+            });
+
+            // update initial status
+            updateTaskCard(taskId, initialStatus, 'Queued', 0, null);
+        }
+
+        function updateTaskCard(taskId, status, stage, progress, result){
+            const t = tasksMap[taskId]; if (!t) return;
+            t.status = status;
+            const el = t.elements;
+            // main monitor uses different elements (may be ui.*)
+            if (el && el.stage) el.stage.textContent = stage || (el.stage.textContent || '');
+            if (el && el.progressBar) el.progressBar.style.width = `${Math.floor(progress||0)}%`;
+            if (el && el.progressText) el.progressText.textContent = `${Math.floor(progress||0)}%`;
+
+            if (status === 'COMPLETED') {
+                if (el && el.wsStatus) { el.wsStatus.textContent = 'Completed'; el.wsStatus.className='font-bold text-green-600'; }
+                if (el && el.cancelBtn) el.cancelBtn.disabled = true;
+                // show small summary (for auxiliary cards)
+                if (el && el.card && result) {
+                    const sum = document.createElement('div'); sum.className='text-sm'; sum.style.marginTop='8px';
+                    sum.innerHTML = `<strong>Max:</strong> ${result.max_temperature_c} C — <strong>Avg:</strong> ${result.average_temperature_c} C`;
+                    el.card.appendChild(sum);
+                }
+                // Update main monitor if this is the main task
+                if (taskId === mainTaskId) {
+                    setStatus(taskId, status, stage, progress, result);
+                }
+            } else if (status === 'FAILED' || status === 'CANCELLED') {
+                if (el && el.wsStatus) { el.wsStatus.textContent = status; el.wsStatus.className='font-bold text-red-600'; }
+                if (el && el.cancelBtn) el.cancelBtn.disabled=true;
+                if (taskId === mainTaskId) setStatus(taskId, status, stage, progress, result);
+            } else {
+                if (el && el.wsStatus) { el.wsStatus.textContent = status; el.wsStatus.className='font-bold text-yellow-600'; }
+                if (taskId === mainTaskId) setStatus(taskId, status, stage, progress, result);
+            }
+        }
+
+        async function fetchHistory() {
+            ui.historyOutput.classList.remove('hidden');
+            ui.historyOutput.textContent = 'Завантаження історії...';
+            
+            try {
+                const token = sessionStorage.getItem('hf_token');
+                const headers = {};
+                if (token) headers['Authorization'] = 'Bearer ' + token;
+                const response = await fetch(token ? '/api/account/history' : `${API_TASKS_URL}/history`, {headers});
+                const data = await response.json();
+                
+                // Виводимо повний JSON для налагодження
+                let output = 'Історія Завдань (JSON):\n' + JSON.stringify(data, null, 2);
+                
+                // --- ДОДАВАННЯ ВІДОБРАЖЕННЯ РЕЗУЛЬТАТУ В ІСТОРІЇ ---
+                
+                // Шукаємо останнє завершене завдання з результатом
+                const completedTask = data.find(t => t.status === 'COMPLETED' && t.result);
+                
+                if (completedTask) {
+                    const result = completedTask.result;
+                    
+                    // Форматуємо дані для виводу
+                    let resultText = `\n\n--- Результат (Task ${completedTask.task_id}) ---\n`;
+                    resultText += `Максимальна Температура (C): ${result.max_temperature_c}\n`;
+                    resultText += `Середня Температура (C): ${result.average_temperature_c}\n`;
+                    resultText += `Розмір Сітки: ${result.grid_dimensions}\n`;
+                    resultText += `Час обчислення: ${result.execution_time_seconds} сек\n`;
+                    
+                    // HTML для заглушки візуалізації
+                    const resultHtml = `
+                        <h3 class="text-xl font-semibold mt-4 mb-2 text-green-700">Візуалізація Теплового Поля</h3>
+                        <img src="https://placehold.co/400x150/10B981/ffffff?text=Max+Temp:${result.max_temperature_c}C" 
+                             alt="Thermal Simulation Result" 
+                             class="rounded-lg mb-4 border border-green-600 mx-auto"/>
+                    `;
+                    
+                    // Вставляємо HTML результату перед JSON історією
+                    ui.historyOutput.innerHTML = resultHtml + `<pre class="p-0 m-0">${resultText + output}</pre>`;
+                    
+                } else {
+                    ui.historyOutput.textContent = output;
+                }
+
+                ui.messageBox.textContent = 'Історія завантажена.';
+                // If history was requested from profile, show it there
+                const profileHistory = document.getElementById('profile-history');
+                if (profileHistory) {
+                    profileHistory.style.display = 'block';
+                }
+
+            } catch (error) {
+                ui.messageBox.textContent = 'Помилка завантаження історії.';
+                ui.historyOutput.textContent = 'Не вдалося завантажити історію завдань.';
+            }
+        }
+
+                // Ініціалізація стану при завантаженні
+                window.onload = () => {
+                        setStatus(null, 'IDLE', 'Ready to start', 0, null);
+                };
+        </script>
+
+    <script>
+        // Populate user info and handle logout (clear both username and password)
+        (function(){
+            try {
+                const userInfo = document.getElementById('userInfo');
+                if (userInfo) {
+                    userInfo.textContent = 'User: ' + (sessionStorage.getItem('hf_username') || 'unknown');
+                }
+
+                const logoutBtn = document.getElementById('logoutBtn');
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', () => {
+                        sessionStorage.removeItem('hf_username');
+                        sessionStorage.removeItem('hf_token');
+                        window.location.href = '/';
+                    });
+                }
+
+                // profile handling moved to separate /profile page
+            } catch (e) {
+                // ignore
+            }
+        })();
+    </script>
+</body>
+</html>
