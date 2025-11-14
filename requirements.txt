@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+numpy
+pydantic
+python-multipart
+websockets
+# celery, redis and bcrypt removed for local single-process mode
