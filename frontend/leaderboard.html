@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Leaderboard — HeatFlow Solver</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <script>
+    (function(){
+      try {
+        const token = sessionStorage.getItem('hf_token');
+        const username = sessionStorage.getItem('hf_username');
+        if (!token || !username) {
+          window.location.href = '/';
+        }
+      } catch (e) {
+        window.location.href = '/';
+      }
+    })();
+  </script>
+
+  <header class="app-header" style="width:100%;max-width:1100px;margin:18px auto 0;">
+    <div class="profile-header-brand">
+      <div class="profile-header-kicker">Community ranking</div>
+      <h1 style="font-size:1.6rem;margin:0;color:var(--accent-2);">Heat Leaderboard</h1>
+    </div>
+    <div id="leaderboardUserInfo" class="profile-header-user">User: <span id="leaderboardUsername">User</span></div>
+    <a class="btn btn-secondary" href="/app">Back to App</a>
+  </header>
+
+  <main class="leaderboard-page">
+    <section class="leaderboard-shell">
+      <div class="leaderboard-head">
+        <div>
+          <h2>Top HeatFlow Users</h2>
+          <p>Рейтинг користувачів за найкращими результатами симуляцій теплового потоку. Чим вища температура і більше вдалих запусків, тим вище позиція.</p>
+        </div>
+        <button id="refreshLeaderboardBtn" class="btn btn-ghost" type="button">Refresh</button>
+      </div>
+
+      <div id="leaderboardList" class="leaderboard-list">Loading leaderboard...</div>
+    </section>
+  </main>
+
+  <script>
+    (function(){
+      const leaderboardList = document.getElementById('leaderboardList');
+      const refreshLeaderboardBtn = document.getElementById('refreshLeaderboardBtn');
+      const currentUsername = sessionStorage.getItem('hf_username') || 'unknown';
+      document.getElementById('leaderboardUsername').textContent = currentUsername;
+
+      async function loadLeaderboard() {
+        leaderboardList.textContent = 'Loading leaderboard...';
+        try {
+          const response = await fetch('/api/leaderboard');
+          const rows = await response.json();
+          if (!response.ok) throw new Error('Could not load leaderboard');
+
+          if (!rows.length) {
+            leaderboardList.innerHTML = `<div class="leaderboard-empty">No completed sessions yet. Run a few simulations to fill the board.</div>`;
+            return;
+          }
+
+          leaderboardList.innerHTML = rows.map((row, index) => {
+            const temp = typeof row.best_temperature === 'number' ? `${row.best_temperature.toFixed(2)}°C` : 'N/A';
+            const avgDuration = typeof row.avg_duration === 'number' ? `${row.avg_duration.toFixed(2)}s` : 'N/A';
+            const cleanNickname = (row.nickname || '').trim();
+            const hasSeparateNickname = cleanNickname && cleanNickname.toLowerCase() !== String(row.username || '').trim().toLowerCase();
+            const nicknameMeta = hasSeparateNickname ? `@${cleanNickname}` : '';
+            return `
+              <div class="leaderboard-item">
+                <div class="leaderboard-rank">#${index + 1}</div>
+                <div class="leaderboard-user">
+                  <strong>${row.username}</strong>
+                  ${nicknameMeta ? `<span>${nicknameMeta}</span>` : ''}
+                </div>
+                <div class="leaderboard-stats">
+                  <span>Best: ${temp}</span>
+                  <span>Sessions: ${row.sessions_count}</span>
+                  <span>Avg: ${avgDuration}</span>
+                </div>
+              </div>
+            `;
+          }).join('');
+        } catch (error) {
+          leaderboardList.innerHTML = `<div class="leaderboard-empty">Could not load leaderboard.</div>`;
+        }
+      }
+
+      refreshLeaderboardBtn.addEventListener('click', loadLeaderboard);
+      loadLeaderboard();
+    })();
+  </script>
+</body>
+</html>

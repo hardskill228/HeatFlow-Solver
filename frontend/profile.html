@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Profile — HeatFlow Solver</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header class="app-header" style="width:100%;max-width:980px;margin:18px auto 0;">
+    <div class="profile-header-brand">
+      <div class="profile-header-kicker">Heat simulation workspace</div>
+      <h1 style="font-size:1.6rem;margin:0;color:var(--accent-2);">HeatFlow Solver</h1>
+    </div>
+    <div id="userHeader" class="profile-header-user">
+      <span id="profileHeaderAvatar" class="mini-avatar">U</span>
+      <span>User: <span id="p-username-header">User</span></span>
+    </div>
+  </header>
+
+  <main class="profile-container">
+    <section class="profile-card">
+      <div class="profile-hero">
+        <div id="profileAvatarHero" class="profile-avatar-large">U</div>
+        <div>
+          <div class="profile-eyebrow">Profile overview</div>
+          <h1 id="p-username">User</h1>
+          <p id="p-name-display" class="profile-real-name">Name not set yet</p>
+          <p id="p-nickname-display" class="profile-handle">No active nickname yet</p>
+          <p class="profile-lead">Переглядай історію запусків, швидко витягуй summary по сесіях і повертайся до задач без зайвих переходів.</p>
+        </div>
+        <a href="/app" class="btn btn-ghost profile-back-link">Back to App</a>
+      </div>
+
+      <div class="profile-summary-grid">
+        <div class="profile-summary-card">
+          <span class="summary-label">Registered</span>
+          <strong id="p-created">N/A</strong>
+        </div>
+        <div class="profile-summary-card">
+          <span class="summary-label">Sessions</span>
+          <strong id="profile-session-count">0</strong>
+        </div>
+        <div class="profile-summary-card">
+          <span class="summary-label">Best Temperature</span>
+          <strong id="profile-best-temp">N/A</strong>
+        </div>
+      </div>
+
+      <section class="profile-account-editor">
+        <div class="profile-account-head">
+          <div>
+            <h2>Account Details</h2>
+            <p>Редагуй дані профілю, вони зберігаються автоматично та одразу оновлюються в базі даних.</p>
+          </div>
+          <button id="saveProfileBtn" class="btn btn-primary" type="button">Save now</button>
+        </div>
+
+        <div class="profile-form-grid">
+          <label class="field">
+            <span>Username</span>
+            <small class="field-help">Public display name across the app and leaderboard.</small>
+            <input id="account-username" type="text" readonly />
+          </label>
+
+          <label class="field">
+            <span>Name</span>
+            <small class="field-help">Real name of the person who created the account.</small>
+            <input id="account-name" type="text" placeholder="Your real name" />
+          </label>
+
+          <label class="field profile-span-2">
+            <span>Profile photo</span>
+            <small class="field-help">Visible in the profile and app header.</small>
+            <div class="avatar-upload-row">
+              <div id="account-avatar-preview" class="avatar-preview">U</div>
+              <div class="avatar-upload-actions">
+                <input id="account-avatar-file" type="file" accept="image/*" />
+                <button id="removeAvatarBtn" class="btn btn-ghost profile-inline-btn" type="button">Remove photo</button>
+              </div>
+            </div>
+          </label>
+
+          <label class="field">
+            <span>Email</span>
+            <input id="account-email" type="email" placeholder="you@example.com" />
+          </label>
+
+          <label class="field profile-span-2">
+            <span>Address</span>
+            <input id="account-address" type="text" placeholder="Street, house, apartment" />
+          </label>
+
+          <label class="field">
+            <span>City</span>
+            <input id="account-city" type="text" placeholder="Kyiv" />
+          </label>
+
+          <label class="field">
+            <span>Phone</span>
+            <input id="account-phone" type="tel" placeholder="+380..." />
+          </label>
+        </div>
+
+        <p id="profile-save-status" class="note" aria-live="polite">Profile loaded.</p>
+      </section>
+
+      <section class="profile-nickname-editor">
+        <div class="profile-account-head">
+          <div>
+            <h2>Nickname Reservation</h2>
+            <p>`Nickname` працює як Telegram handle: це окремий унікальний `@handle`, який можна зарезервувати і потім активувати.</p>
+          </div>
+        </div>
+
+        <div class="profile-nickname-grid">
+          <div class="profile-nickname-card">
+            <span class="summary-label">Active nickname</span>
+            <strong id="nickname-current">Not active yet</strong>
+          </div>
+          <div class="profile-nickname-card">
+            <span class="summary-label">Reserved nickname</span>
+            <strong id="nickname-pending">Nothing reserved</strong>
+          </div>
+        </div>
+
+        <div class="profile-form-grid">
+          <label class="field profile-span-2">
+            <span>Desired nickname</span>
+            <input id="nickname-input" type="text" placeholder="Use 3-20 letters, numbers or underscore" />
+          </label>
+        </div>
+
+        <div class="profile-actions profile-nickname-actions">
+          <button id="nicknameCheckBtn" class="btn btn-secondary profile-action-btn" type="button">Check</button>
+          <button id="nicknameReserveBtn" class="btn btn-accent-alt profile-action-btn" type="button">Reserve</button>
+          <button id="nicknameActivateBtn" class="btn btn-primary profile-action-btn" type="button">Activate</button>
+        </div>
+        <p id="nickname-status" class="note" aria-live="polite">Choose a nickname to start.</p>
+      </section>
+
+      <section class="profile-username-editor">
+        <div class="profile-account-head">
+          <div>
+            <h2>Username Change Procedure</h2>
+            <p>Це окрема захищена процедура: перевірка нового username, резерв на 15 хвилин, повторне підтвердження пароля і лише тоді активація.</p>
+          </div>
+        </div>
+
+        <div class="profile-nickname-grid">
+          <div class="profile-nickname-card">
+            <span class="summary-label">Current username</span>
+            <strong id="username-current">current_user</strong>
+          </div>
+          <div class="profile-nickname-card">
+            <span class="summary-label">Reserved username</span>
+            <strong id="username-pending">Nothing reserved</strong>
+          </div>
+        </div>
+
+        <div class="profile-form-grid">
+          <label class="field">
+            <span>New username</span>
+            <input id="username-change-input" type="text" placeholder="Start with a letter, 4-24 chars" />
+          </label>
+          <label class="field">
+            <span>Current password</span>
+            <input id="username-change-password" type="password" placeholder="Confirm with current password" />
+          </label>
+        </div>
+
+        <div class="profile-actions profile-nickname-actions">
+          <button id="usernameCheckBtn" class="btn btn-secondary profile-action-btn" type="button">Check</button>
+          <button id="usernameReserveBtn" class="btn btn-accent-alt profile-action-btn" type="button">Reserve</button>
+          <button id="usernameActivateBtn" class="btn btn-primary profile-action-btn" type="button">Activate</button>
+        </div>
+        <p id="username-status" class="note" aria-live="polite">Username can be changed only through this protected flow.</p>
+      </section>
+
+      <p class="profile-password-row">Password: <span id="p-password">••••••••</span> <button id="showPwd" class="btn btn-ghost profile-inline-btn">Show</button></p>
+      <hr />
+      <div class="profile-actions">
+        <button id="exportSessionsBtn" class="btn btn-secondary profile-action-btn" type="button">Export JSON</button>
+        <button id="sortHotBtn" class="btn btn-accent-alt profile-action-btn" type="button">Hottest First</button>
+        <button id="bestSessionBtn" class="btn btn-primary profile-action-btn" type="button">Best Session</button>
+        <button id="randomSessionBtn" class="btn btn-secondary profile-action-btn" type="button">Open Random</button>
+        <button id="copySummaryBtn" class="btn btn-accent-alt profile-action-btn" type="button">Copy Summary</button>
+        <button id="resetSessionsBtn" class="btn btn-ghost profile-action-btn profile-action-reset" type="button">Reset List</button>
+      </div>
+      <p id="profile-tools-status" class="note" aria-live="polite"></p>
+      <h2>Your Sessions</h2>
+      <div id="sessions" class="sessions-list">Loading...</div>
+      <div id="session-detail" style="display:none;margin-top:16px;">
+        <h3>Session <span id="sd-taskid"></span></h3>
+        <p>Status: <span id="sd-status"></span></p>
+        <p>Duration: <span id="sd-duration"></span> sec</p>
+        <div>
+          <canvas id="tempChart" width="800" height="280" style="background:#fff;border-radius:8px"></canvas>
+        </div>
+        <div style="margin-top:12px;">
+          <canvas id="cpuChart" width="800" height="160" style="background:#fff;border-radius:8px"></canvas>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    (async function(){
+      const token = sessionStorage.getItem('hf_token') || localStorage.getItem('hf_token');
+      if (!token) { window.location.href = '/'; return; }
+      const resp = await fetch('/api/account/profile', {headers:{'Authorization':'Bearer '+token}});
+      if (!resp.ok) { document.getElementById('sessions').textContent='Failed to load profile'; return; }
+      const profile = await resp.json();
+      document.getElementById('p-username').textContent = profile.username;
+      document.getElementById('p-username-header').textContent = profile.username;
+      const nicknameDisplay = document.getElementById('p-nickname-display');
+      const nameDisplay = document.getElementById('p-name-display');
+      const profileAvatarHero = document.getElementById('profileAvatarHero');
+      const profileHeaderAvatar = document.getElementById('profileHeaderAvatar');
+      const createdDate = typeof profile.created_at === 'number' 
+        ? new Date(profile.created_at * 1000) 
+        : new Date(profile.created_at);
+      document.getElementById('p-created').textContent = createdDate.toLocaleString();
+      const saveStatus = document.getElementById('profile-save-status');
+      const saveProfileBtn = document.getElementById('saveProfileBtn');
+      const nicknameInput = document.getElementById('nickname-input');
+      const nicknameCurrent = document.getElementById('nickname-current');
+      const nicknamePending = document.getElementById('nickname-pending');
+      const nicknameStatus = document.getElementById('nickname-status');
+      const nicknameCheckBtn = document.getElementById('nicknameCheckBtn');
+      const nicknameReserveBtn = document.getElementById('nicknameReserveBtn');
+      const nicknameActivateBtn = document.getElementById('nicknameActivateBtn');
+      const usernameCurrent = document.getElementById('username-current');
+      const usernamePending = document.getElementById('username-pending');
+      const usernameStatus = document.getElementById('username-status');
+      const usernameCheckBtn = document.getElementById('usernameCheckBtn');
+      const usernameReserveBtn = document.getElementById('usernameReserveBtn');
+      const usernameActivateBtn = document.getElementById('usernameActivateBtn');
+      const usernameChangeInput = document.getElementById('username-change-input');
+      const usernameChangePassword = document.getElementById('username-change-password');
+      const accountFields = {
+        username: document.getElementById('account-username'),
+        name: document.getElementById('account-name'),
+        email: document.getElementById('account-email'),
+        address: document.getElementById('account-address'),
+        city: document.getElementById('account-city'),
+        phone: document.getElementById('account-phone')
+      };
+      const avatarInput = document.getElementById('account-avatar-file');
+      const avatarPreview = document.getElementById('account-avatar-preview');
+      const removeAvatarBtn = document.getElementById('removeAvatarBtn');
+      let currentAvatarUrl = profile.avatar_url || '';
+
+      function getInitials(data) {
+        const source = (data.username || 'U').trim();
+        return source.slice(0, 1).toUpperCase();
+      }
+
+      function renderAvatar(target, avatarUrl, data) {
+        if (!target) return;
+        if (avatarUrl) {
+          target.classList.add('has-image');
+          target.innerHTML = `<img src="${avatarUrl}" alt="Profile photo" />`;
+          return;
+        }
+        target.classList.remove('has-image');
+        target.textContent = getInitials(data);
+      }
+
+      function syncAvatar(data) {
+        const avatarUrl = currentAvatarUrl || data.avatar_url || '';
+        renderAvatar(avatarPreview, avatarUrl, data);
+        renderAvatar(profileAvatarHero, avatarUrl, data);
+        renderAvatar(profileHeaderAvatar, avatarUrl, data);
+      }
+
+      async function fileToDataUrl(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error('Could not read image.'));
+          reader.readAsDataURL(file);
+        });
+      }
+
+      function profilePayload() {
+        return {
+          name: accountFields.name.value.trim(),
+          avatar_url: currentAvatarUrl || '',
+          email: accountFields.email.value.trim(),
+          address: accountFields.address.value.trim(),
+          city: accountFields.city.value.trim(),
+          phone: accountFields.phone.value.trim()
+        };
+      }
+
+      function fillProfileForm(data) {
+        accountFields.username.value = data.username || '';
+        accountFields.name.value = data.name || '';
+        currentAvatarUrl = data.avatar_url || '';
+        accountFields.email.value = data.email || '';
+        accountFields.address.value = data.address || '';
+        accountFields.city.value = data.city || '';
+        accountFields.phone.value = data.phone || '';
+        nameDisplay.textContent = data.name ? `Name: ${data.name}` : 'Name not set yet';
+        syncAvatar(data);
+      }
+
+      function formatReservationTime(value) {
+        if (!value) return '';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return '';
+        return date.toLocaleString();
+      }
+
+      function fillNicknameSection(data) {
+        nicknameCurrent.textContent = data.nickname ? `@${data.nickname}` : 'Not active yet';
+        nicknameDisplay.textContent = data.nickname ? `Nickname: @${data.nickname}` : 'No nickname set yet';
+        if (data.pending_nickname) {
+          const expires = formatReservationTime(data.nickname_reserved_until);
+          nicknamePending.textContent = expires
+            ? `@${data.pending_nickname} until ${expires}`
+            : `@${data.pending_nickname}`;
+          nicknameInput.value = data.pending_nickname;
+        } else {
+          nicknamePending.textContent = 'Nothing reserved';
+          nicknameInput.value = '';
+        }
+      }
+
+      function fillUsernameSection(data) {
+        usernameCurrent.textContent = data.username || 'current_user';
+        if (data.pending_username) {
+          const expires = formatReservationTime(data.username_reserved_until);
+          usernamePending.textContent = expires
+            ? `${data.pending_username} until ${expires}`
+            : data.pending_username;
+          usernameChangeInput.value = data.pending_username;
+        } else {
+          usernamePending.textContent = 'Nothing reserved';
+        }
+      }
+
+      function setSaveStatus(message, tone) {
+        saveStatus.textContent = message;
+        saveStatus.className = `note profile-save-note${tone ? ` is-${tone}` : ''}`;
+      }
+
+      function setNicknameStatus(message, tone) {
+        nicknameStatus.textContent = message;
+        nicknameStatus.className = `note profile-save-note${tone ? ` is-${tone}` : ''}`;
+      }
+
+      let saveTimer = null;
+      let lastSavedSnapshot = '';
+      let saveRequestId = 0;
+
+      async function persistProfile(source) {
+        const payload = profilePayload();
+        const snapshot = JSON.stringify(payload);
+        if (snapshot === lastSavedSnapshot) {
+          if (source === 'manual') {
+            setSaveStatus('Nothing changed yet.', 'idle');
+          }
+          return;
+        }
+
+        const requestId = ++saveRequestId;
+        setSaveStatus(source === 'manual' ? 'Saving profile...' : 'Saving changes...', 'saving');
+
+        try {
+          const saveResp = await fetch('/api/account/profile', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify(payload)
+          });
+
+          if (!saveResp.ok) {
+            const json = await saveResp.json().catch(() => ({ detail: 'Save failed' }));
+            throw new Error(json.detail || 'Save failed');
+          }
+
+          const updatedProfile = await saveResp.json();
+          if (requestId !== saveRequestId) return;
+          fillProfileForm(updatedProfile);
+          lastSavedSnapshot = JSON.stringify(profilePayload());
+          setSaveStatus('Profile saved to database.', 'success');
+        } catch (error) {
+          if (requestId !== saveRequestId) return;
+          setSaveStatus(error.message || 'Could not save profile.', 'error');
+        }
+      }
+
+      fillProfileForm(profile);
+      fillNicknameSection(profile);
+      fillUsernameSection(profile);
+      lastSavedSnapshot = JSON.stringify(profilePayload());
+
+      ['input', 'change'].forEach(eventName => {
+        Object.values(accountFields).forEach(field => {
+          if (field === accountFields.username) return;
+          field.addEventListener(eventName, () => {
+            setSaveStatus('Changes detected. Saving soon...', 'saving');
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(() => persistProfile('auto'), 450);
+          });
+        });
+      });
+
+      saveProfileBtn.addEventListener('click', () => {
+        clearTimeout(saveTimer);
+        persistProfile('manual');
+      });
+
+      avatarInput.addEventListener('change', async () => {
+        const file = avatarInput.files && avatarInput.files[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+          setSaveStatus('Choose an image file for the profile photo.', 'error');
+          avatarInput.value = '';
+          return;
+        }
+        try {
+          currentAvatarUrl = await fileToDataUrl(file);
+          syncAvatar(profile);
+          setSaveStatus('Photo selected. Saving soon...', 'saving');
+          clearTimeout(saveTimer);
+          saveTimer = setTimeout(() => persistProfile('auto'), 250);
+        } catch (error) {
+          setSaveStatus(error.message || 'Could not load image.', 'error');
+        }
+      });
+
+      removeAvatarBtn.addEventListener('click', () => {
+        currentAvatarUrl = '';
+        avatarInput.value = '';
+        syncAvatar(profile);
+        setSaveStatus('Photo removed. Saving soon...', 'saving');
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => persistProfile('auto'), 250);
+      });
+
+      nicknameCheckBtn.addEventListener('click', async () => {
+        const candidate = nicknameInput.value.trim();
+        if (!candidate) {
+          setNicknameStatus('Enter a nickname first.', 'idle');
+          return;
+        }
+        setNicknameStatus('Checking nickname availability...', 'saving');
+        try {
+          const checkResp = await fetch(`/api/account/nickname/check?value=${encodeURIComponent(candidate)}`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          const checkData = await checkResp.json();
+          if (!checkResp.ok) {
+            throw new Error(checkData.detail || 'Could not check nickname.');
+          }
+          setNicknameStatus(checkData.reason, checkData.available ? 'success' : 'error');
+        } catch (error) {
+          setNicknameStatus(error.message || 'Could not check nickname.', 'error');
+        }
+      });
+
+      nicknameReserveBtn.addEventListener('click', async () => {
+        const candidate = nicknameInput.value.trim();
+        if (!candidate) {
+          setNicknameStatus('Enter a nickname first.', 'idle');
+          return;
+        }
+        setNicknameStatus('Reserving nickname...', 'saving');
+        try {
+          const reserveResp = await fetch('/api/account/nickname/reserve', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ nickname: candidate })
+          });
+          const reserveData = await reserveResp.json();
+          if (!reserveResp.ok) {
+            throw new Error(reserveData.detail || 'Could not reserve nickname.');
+          }
+          fillNicknameSection(reserveData);
+          setNicknameStatus(reserveData.message || 'Nickname reserved.', 'success');
+        } catch (error) {
+          setNicknameStatus(error.message || 'Could not reserve nickname.', 'error');
+        }
+      });
+
+      nicknameActivateBtn.addEventListener('click', async () => {
+        setNicknameStatus('Activating nickname...', 'saving');
+        try {
+          const activateResp = await fetch('/api/account/nickname/activate', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          const activateData = await activateResp.json();
+          if (!activateResp.ok) {
+            throw new Error(activateData.detail || 'Could not activate nickname.');
+          }
+          fillNicknameSection(activateData);
+          setNicknameStatus(activateData.message || 'Nickname activated.', 'success');
+        } catch (error) {
+          setNicknameStatus(error.message || 'Could not activate nickname.', 'error');
+        }
+      });
+
+      function setUsernameStatus(message, tone) {
+        usernameStatus.textContent = message;
+        usernameStatus.className = `note profile-save-note${tone ? ` is-${tone}` : ''}`;
+      }
+
+      function getUsernameChangePayload() {
+        return {
+          username: usernameChangeInput.value.trim(),
+          current_password: usernameChangePassword.value
+        };
+      }
+
+      usernameCheckBtn.addEventListener('click', async () => {
+        const candidate = usernameChangeInput.value.trim();
+        if (!candidate) {
+          setUsernameStatus('Enter a new username first.', 'idle');
+          return;
+        }
+        setUsernameStatus('Checking username availability...', 'saving');
+        try {
+          const checkResp = await fetch(`/api/account/username/check?value=${encodeURIComponent(candidate)}`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          const data = await checkResp.json();
+          if (!checkResp.ok) throw new Error(data.detail || 'Could not check username.');
+          setUsernameStatus(data.reason, data.available ? 'success' : 'error');
+        } catch (error) {
+          setUsernameStatus(error.message || 'Could not check username.', 'error');
+        }
+      });
+
+      usernameReserveBtn.addEventListener('click', async () => {
+        const payload = getUsernameChangePayload();
+        if (!payload.username) {
+          setUsernameStatus('Enter a new username first.', 'idle');
+          return;
+        }
+        if (!payload.current_password) {
+          setUsernameStatus('Enter your current password to reserve a username.', 'idle');
+          return;
+        }
+        setUsernameStatus('Reserving username...', 'saving');
+        try {
+          const reserveResp = await fetch('/api/account/username/reserve', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify(payload)
+          });
+          const data = await reserveResp.json();
+          if (!reserveResp.ok) throw new Error(data.detail || 'Could not reserve username.');
+          fillUsernameSection(data);
+          setUsernameStatus(data.message || 'Username reserved.', 'success');
+        } catch (error) {
+          setUsernameStatus(error.message || 'Could not reserve username.', 'error');
+        }
+      });
+
+      usernameActivateBtn.addEventListener('click', async () => {
+        const payload = getUsernameChangePayload();
+        if (!payload.current_password) {
+          setUsernameStatus('Enter your current password to activate the reserved username.', 'idle');
+          return;
+        }
+        setUsernameStatus('Activating username...', 'saving');
+        try {
+          const activateResp = await fetch('/api/account/username/activate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ current_password: payload.current_password })
+          });
+          const data = await activateResp.json();
+          if (!activateResp.ok) throw new Error(data.detail || 'Could not activate username.');
+          sessionStorage.setItem('hf_username', data.username);
+          localStorage.setItem('hf_username', data.username);
+          document.getElementById('p-username').textContent = data.username;
+          document.getElementById('p-username-header').textContent = data.username;
+          accountFields.username.value = data.username;
+          syncAvatar(data);
+          fillUsernameSection(data);
+          usernameChangePassword.value = '';
+          setUsernameStatus(data.message || 'Username activated.', 'success');
+        } catch (error) {
+          setUsernameStatus(error.message || 'Could not activate username.', 'error');
+        }
+      });
+
+      document.getElementById('showPwd').addEventListener('click', ()=>{
+        alert('For security we store only a hashed password; cannot display the original password.');
+      });
+
+      const resp2 = await fetch('/api/account/history', {headers:{'Authorization':'Bearer '+token}});
+      if (!resp2.ok) { document.getElementById('sessions').textContent='Failed to load sessions'; return; }
+      const sessions = await resp2.json();
+      const list = document.getElementById('sessions');
+      const toolsStatus = document.getElementById('profile-tools-status');
+      const exportBtn = document.getElementById('exportSessionsBtn');
+      const sortHotBtn = document.getElementById('sortHotBtn');
+      const bestSessionBtn = document.getElementById('bestSessionBtn');
+      const randomSessionBtn = document.getElementById('randomSessionBtn');
+      const copySummaryBtn = document.getElementById('copySummaryBtn');
+      const resetBtn = document.getElementById('resetSessionsBtn');
+      const sessionCountEl = document.getElementById('profile-session-count');
+      const bestTempEl = document.getElementById('profile-best-temp');
+      const actionButtons = document.querySelectorAll('.profile-action-btn');
+
+      function activateButton(button) {
+        actionButtons.forEach(btn => btn.classList.remove('is-active'));
+        if (button) {
+          button.classList.add('is-active');
+        }
+      }
+
+      function setToolsStatus(message, button) {
+        toolsStatus.textContent = message;
+        toolsStatus.classList.remove('status-pop');
+        void toolsStatus.offsetWidth;
+        toolsStatus.classList.add('status-pop');
+        activateButton(button);
+      }
+
+      function renderSessions(sessionItems) {
+        list.innerHTML = '';
+        if (!sessionItems || sessionItems.length===0) {
+          list.innerHTML = `
+            <div class="empty-sessions">
+              <div class="empty-sessions-badge">No data yet</div>
+              <h3>No sessions yet</h3>
+              <p>Запусти першу задачу в основному застосунку, і тут з’явиться історія обчислень, температурні графіки та короткі summary.</p>
+              <a href="/app" class="btn btn-primary">Create First Task</a>
+            </div>
+          `;
+          return;
+        }
+
+        sessionItems.forEach(s => {
+        const el = document.createElement('div');
+        el.className = 'session-item';
+        const tempDisplay = s.result && s.result.max_temperature_c !== undefined 
+          ? `<strong>${s.result.max_temperature_c.toFixed(2)}°C</strong>` 
+          : 'N/A';
+        const nodesDisplay = s.result && s.result.nodes ? ` | ${s.result.nodes} nodes` : '';
+        el.innerHTML = `<div style="flex:1"><strong>${s.task_id.substring(0, 8)}...</strong> — <em style='color:var(--muted)'>${s.status}</em> — ${tempDisplay}${nodesDisplay}</div> <div><button data-id='${s.task_id}'>View</button></div>`;
+        list.appendChild(el);
+        const btn = el.querySelector('button');
+        if (btn) { btn.className = 'btn btn-ghost'; btn.style.padding='8px 12px'; }
+        el.querySelector('button').addEventListener('click', ()=> showSession(s));
+        });
+      }
+
+      sessionCountEl.textContent = sessions.length;
+      const bestSession = [...sessions].sort((a, b) => {
+        const aTemp = a.result && typeof a.result.max_temperature_c === 'number' ? a.result.max_temperature_c : -Infinity;
+        const bTemp = b.result && typeof b.result.max_temperature_c === 'number' ? b.result.max_temperature_c : -Infinity;
+        return bTemp - aTemp;
+      })[0];
+      bestTempEl.textContent = bestSession && bestSession.result && bestSession.result.max_temperature_c !== undefined
+        ? `${bestSession.result.max_temperature_c.toFixed(2)}°C`
+        : 'N/A';
+
+      renderSessions(sessions);
+
+      exportBtn.addEventListener('click', () => {
+        const blob = new Blob([JSON.stringify(sessions, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `heatflow-sessions-${profile.username || 'user'}.json`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        setToolsStatus('Session history exported as JSON.', exportBtn);
+      });
+
+      sortHotBtn.addEventListener('click', () => {
+        const sorted = [...sessions].sort((a, b) => {
+          const aTemp = a.result && typeof a.result.max_temperature_c === 'number' ? a.result.max_temperature_c : -Infinity;
+          const bTemp = b.result && typeof b.result.max_temperature_c === 'number' ? b.result.max_temperature_c : -Infinity;
+          return bTemp - aTemp;
+        });
+        renderSessions(sorted);
+        setToolsStatus('Sessions sorted by max temperature.', sortHotBtn);
+      });
+
+      bestSessionBtn.addEventListener('click', () => {
+        if (!sessions.length) {
+          setToolsStatus('No sessions available.', bestSessionBtn);
+          return;
+        }
+        const best = [...sessions].sort((a, b) => {
+          const aTemp = a.result && typeof a.result.max_temperature_c === 'number' ? a.result.max_temperature_c : -Infinity;
+          const bTemp = b.result && typeof b.result.max_temperature_c === 'number' ? b.result.max_temperature_c : -Infinity;
+          return bTemp - aTemp;
+        })[0];
+        showSession(best);
+        setToolsStatus(`Opened hottest session: ${best.task_id.substring(0, 8)}...`, bestSessionBtn);
+      });
+
+      randomSessionBtn.addEventListener('click', () => {
+        if (!sessions.length) {
+          setToolsStatus('No sessions available.', randomSessionBtn);
+          return;
+        }
+        const random = sessions[Math.floor(Math.random() * sessions.length)];
+        showSession(random);
+        setToolsStatus(`Opened random session: ${random.task_id.substring(0, 8)}...`, randomSessionBtn);
+      });
+
+      copySummaryBtn.addEventListener('click', async () => {
+        const completed = sessions.filter(s => s.status === 'COMPLETED');
+        const hottest = [...sessions].sort((a, b) => {
+          const aTemp = a.result && typeof a.result.max_temperature_c === 'number' ? a.result.max_temperature_c : -Infinity;
+          const bTemp = b.result && typeof b.result.max_temperature_c === 'number' ? b.result.max_temperature_c : -Infinity;
+          return bTemp - aTemp;
+        })[0];
+        const summary = [
+          `User: ${profile.username}`,
+          `Registered: ${createdDate.toLocaleString()}`,
+          `Total sessions: ${sessions.length}`,
+          `Completed sessions: ${completed.length}`,
+          hottest ? `Hottest session: ${hottest.task_id} (${(hottest.result && hottest.result.max_temperature_c !== undefined) ? hottest.result.max_temperature_c.toFixed(2) : 'N/A'}°C)` : 'Hottest session: N/A'
+        ].join('\n');
+
+        try {
+          await navigator.clipboard.writeText(summary);
+          setToolsStatus('Profile summary copied to clipboard.', copySummaryBtn);
+        } catch (e) {
+          setToolsStatus('Could not copy summary to clipboard.', copySummaryBtn);
+        }
+      });
+
+      resetBtn.addEventListener('click', () => {
+        renderSessions(sessions);
+        setToolsStatus('Session list restored.', resetBtn);
+      });
+
+      function showSession(s){
+        document.getElementById('session-detail').style.display = 'block';
+        document.getElementById('sd-taskid').textContent = s.task_id;
+        document.getElementById('sd-status').textContent = s.status;
+        const dur = (s.end_time && s.start_time) ? (s.end_time - s.start_time).toFixed(2) : (s.result && s.result.execution_time_seconds) || 'N/A';
+        document.getElementById('sd-duration').textContent = dur;
+        const ts = (s.result && s.result.time_series) || [];
+        if (ts.length===0) { 
+          const tempCtx = document.getElementById('tempChart');
+          const cpuCtx = document.getElementById('cpuChart');
+          if (window.tempChartInstance) window.tempChartInstance.destroy();
+          if (window.cpuChartInstance) window.cpuChartInstance.destroy();
+
+          const tempContext = tempCtx.getContext('2d');
+          tempContext.clearRect(0, 0, tempCtx.width, tempCtx.height);
+          tempContext.font = '16px sans-serif';
+          tempContext.fillStyle = '#666';
+          tempContext.textAlign = 'center';
+          tempContext.fillText('Time series data not stored in database', tempCtx.width/2, tempCtx.height/2);
+          
+          const cpuContext = cpuCtx.getContext('2d');
+          cpuContext.clearRect(0, 0, cpuCtx.width, cpuCtx.height);
+          return; 
+        }
+
+        const labels = ts.map((p,i)=>{
+          if (p.timestamp) return new Date(p.timestamp*1000).toLocaleTimeString();
+          return 't' + i;
+        });
+        const temps = ts.map(p=>p.temperature_c);
+        const cpus = ts.map(p=>p.cpu_percent);
+
+        const tempCtx = document.getElementById('tempChart').getContext('2d');
+        if (window.tempChartInstance) window.tempChartInstance.destroy();
+        window.tempChartInstance = new Chart(tempCtx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Temperature (°C)',
+              data: temps,
+              borderColor: '#e11d48',
+              backgroundColor: 'rgba(225,29,72,0.12)',
+              pointRadius: 0,
+              fill: true,
+              tension: 0.2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: { display: true, title: { display: true, text: 'Time' } },
+              y: { display: true, title: { display: true, text: '°C' }, beginAtZero: false }
+            },
+            plugins: { legend:{display:true}, tooltip:{mode:'index',intersect:false} }
+          }
+        });
+
+        const cpuCtx = document.getElementById('cpuChart').getContext('2d');
+        if (window.cpuChartInstance) window.cpuChartInstance.destroy();
+        window.cpuChartInstance = new Chart(cpuCtx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'CPU (%)',
+              data: cpus,
+              borderColor: '#06b6d4',
+              backgroundColor: 'rgba(6,182,212,0.12)',
+              pointRadius: 0,
+              fill: true,
+              tension: 0.2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: { display: true, title: { display: true, text: 'Time' } },
+              y: { display: true, title: { display: true, text: '%' }, min:0, max:100 }
+            },
+            plugins: { legend:{display:true}, tooltip:{mode:'index',intersect:false} }
+          }
+        });
+        document.getElementById('session-detail').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    })();
+  </script>
+</body>
+</html>

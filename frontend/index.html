@@ -1,0 +1,923 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>HeatFlow Solver — App</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+        <script>
+
+            (function(){
+                try {
+                    const token = sessionStorage.getItem('hf_token');
+                    const username = sessionStorage.getItem('hf_username');
+                    if (!token || !username) {
+                        window.location.href = '/';
+                    }
+                } catch(e) { window.location.href = '/'; }
+            })();
+        </script>
+
+  <header class="app-header">
+    <h1>HeatFlow Solver</h1>
+    <div id="userInfo" class="app-user-pill">
+      <span id="appHeaderAvatar" class="mini-avatar">U</span>
+      <span id="appHeaderUsername">unknown</span>
+    </div>
+    <a id="leaderboardBtn" class="btn btn-secondary app-nav-btn" href="/leaderboard">Leaderboard</a>
+    <a id="profileBtn" class="btn btn-secondary" href="/profile">Profile</a>
+    <button id="logoutBtn" class="btn btn-danger app-logout-btn">Logout</button>
+  </header>
+    
+
+  <main class="app-body">
+        <div class="card p-6 bg-gray-50 rounded-xl mb-8 border border-gray-200">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Налаштування Задачі</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label for="nodes" class="block text-sm font-medium text-gray-700">Кількість Вузлів (Nodes):</label>
+                    <input type="number" id="nodes" value="50000" min="1000" max="100000"
+                           class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-red-500 focus:border-red-500">
+                    <p class="text-xs text-gray-500 mt-1">MAX 100,000 (Вимога №1)</p>
+                </div>
+                <div>
+                    <label for="iterations" class="block text-sm font-medium text-gray-700">Ітерації Симуляції:</label>
+                    <input type="number" id="iterations" value="10000" min="10" max="1000000"
+                           class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-red-500 focus:border-red-500">
+                    <p class="text-xs text-gray-500 mt-1">Визначає час, необхідний для обчислення.</p>
+                </div>
+            </div>
+
+        <button id="startButton" onclick="startTask()"
+            class="btn btn-primary" style="width:100%;padding:14px 18px;font-size:16px;">
+                Запустити Обчислення
+            </button>
+            <p id="message-box" class="text-center mt-3 text-sm font-medium text-red-500"></p>
+        </div>
+
+        <div class="card p-6 bg-white rounded-xl shadow-inner border border-red-200">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Моніторинг Завдання</h2>
+
+            <div class="space-y-2 text-sm">
+                <p><strong>Task ID:</strong> <span id="task-id" class="font-mono text-xs text-blue-600">N/A</span></p>
+                <p><strong>Status:</strong> <span id="task-status" class="font-bold text-gray-600">IDLE</span></p>
+                <p><strong>Worker:</strong> <span id="task-worker" class="font-semibold text-purple-600">N/A</span></p>
+                <p><strong>Current Stage:</strong> <span id="task-stage" class="text-gray-600">Ready to start</span></p>
+            </div>
+
+            <div class="mt-4">
+                <p class="font-semibold text-gray-700 mb-2">Progress:</p>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                    <div id="progress-percent" style="font-weight:700;color:var(--accent-2)">0%</div>
+                    <div id="progress-stage" style="font-size:0.9rem;color:var(--muted)"></div>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3.5 mb-2 main-progress-track">
+                    <div id="progress-bar" class="bg-blue-500 h-3.5 rounded-full text-xs font-medium text-white text-center p-0.5 leading-none" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div id="result-display" class="hidden mt-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+                <h3 class="font-bold text-blue-800 mb-2">Результат Обчислення:</h3>
+                <p class="text-sm text-blue-700">Максимальна Температура (C): <span id="max-temp" class="font-mono">N/A</span></p>
+                <p class="text-sm text-blue-700">Середня Температура (C): <span id="avg-temp" class="font-mono">N/A</span></p>
+                <p class="text-sm text-blue-700">Час виконання (сек): <span id="exec-time" class="font-mono">N/A</span></p>
+                <img id="result-image" src="https://placehold.co/400x100/f3f4f6/374151?text=Simulation+Result" 
+                     alt="Simulation Result Placeholder" 
+                     class="mt-4 rounded-lg border border-gray-300 mx-auto" style="max-width: 100%;"/>
+            </div>
+
+            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mt-6">
+        <button id="cancelButton" disabled
+            class="btn btn-danger" style="flex:1;padding:10px 12px;">
+                    Скасувати Завдання
+                </button>
+        <button id="pauseResumeButton" disabled class="btn btn-ghost" style="margin-left:12px;padding:10px 12px;">Stop</button>
+
+            </div>
+
+            <p class="text-sm mt-3 text-center">WebSocket Status: <span id="ws-status" class="font-bold text-gray-500">Disconnected</span></p>
+        </div>
+        <div id="tasksContainer"></div>
+        
+        <pre id="history-output" class="hidden mt-8 p-4 bg-gray-800 text-green-300 text-xs rounded-lg overflow-auto max-h-96"></pre>
+        
+    </div>
+
+    <script>
+
+        const BASE_URL = window.location.origin; 
+        const API_TASKS_URL = BASE_URL + '/api/tasks';
+        const WS_BASE_URL = 'ws://' + window.location.host;
+
+    const tasksMap = {};
+    let mainTaskId = null; 
+    const ACTIVE_TASKS_KEY = 'hf_active_tasks';
+    const CLOSED_TASKS_KEY = 'hf_closed_tasks';
+    let statusPollTimer = null;
+
+            const ui = {
+            startButton: document.getElementById('startButton'),
+            cancelButton: document.getElementById('cancelButton'),
+            taskId: document.getElementById('task-id'),
+            taskStatus: document.getElementById('task-status'),
+            taskWorker: document.getElementById('task-worker'),
+            taskStage: document.getElementById('task-stage'),
+            progressBar: document.getElementById('progress-bar'),
+            progressPercent: document.getElementById('progress-percent'),
+            progressStageLabel: document.getElementById('progress-stage'),
+            messageBox: document.getElementById('message-box'),
+            wsStatus: document.getElementById('ws-status'),
+            historyOutput: document.getElementById('history-output'),
+            nodes: document.getElementById('nodes'),
+            iterations: document.getElementById('iterations'),
+            pauseResumeButton: document.getElementById('pauseResumeButton'),
+            resultDisplay: document.getElementById('result-display'),
+            maxTemp: document.getElementById('max-temp'),
+            avgTemp: document.getElementById('avg-temp'),
+            execTime: document.getElementById('exec-time'),
+            resultImage: document.getElementById('result-image')
+        };
+  
+        function updateResultUI(result) {
+            if (result && result.max_temperature_c !== undefined) {
+
+                ui.maxTemp.textContent = result.max_temperature_c;
+                ui.avgTemp.textContent = result.average_temperature_c;
+                ui.execTime.textContent = result.execution_time_seconds;
+
+                ui.resultImage.src = `https://placehold.co/400x150/10B981/ffffff?text=Max+Temp:${result.max_temperature_c}C`;
+                
+                ui.resultDisplay.classList.remove('hidden');
+            } else {
+
+                ui.resultDisplay.classList.add('hidden');
+            }
+        }
+
+        function isTerminalStatus(status) {
+            return ['COMPLETED', 'FAILED', 'CANCELLED'].includes(status);
+        }
+
+        function isDismissibleStatus(status) {
+            return ['PAUSED', 'COMPLETED', 'FAILED', 'CANCELLED'].includes(status);
+        }
+
+        function normalizeTaskSnapshot(status, stage, progress, result) {
+            let normalizedStatus = status || 'PENDING';
+            let normalizedStage = stage || 'Queued';
+            let normalizedProgress = Number(progress ?? 0) || 0;
+            const hasFinalResult = !!(result && result.execution_time_seconds !== undefined);
+
+            if (hasFinalResult) {
+                normalizedStatus = 'COMPLETED';
+                normalizedStage = '4. Done. Result Ready.';
+                normalizedProgress = 100;
+            }
+
+            if (normalizedStatus === 'COMPLETED') {
+                normalizedStage = normalizedStage || '4. Done. Result Ready.';
+                normalizedProgress = 100;
+            }
+
+            return {
+                status: normalizedStatus,
+                stage: normalizedStage,
+                progress: normalizedProgress,
+                result: result || null
+            };
+        }
+
+        function getTaskPriority(task) {
+            if (!task) return -1;
+            if (task.status === 'RUNNING') return 4;
+            if (task.status === 'PENDING' || task.status === 'QUEUED' || task.status === 'CANCELLATION_REQUESTED') return 3;
+            if (task.status === 'PAUSED') return 2;
+            if (task.status === 'COMPLETED') return 1;
+            return 0;
+        }
+
+        function resetMainMonitor() {
+            mainTaskId = null;
+            setStatus(null, 'IDLE', 'Ready to start', 0, null);
+            ui.cancelButton.disabled = true;
+            ui.cancelButton.onclick = null;
+            ui.pauseResumeButton.disabled = true;
+            ui.pauseResumeButton.onclick = null;
+            ui.wsStatus.textContent = 'Disconnected';
+            ui.wsStatus.className = 'font-bold text-gray-500';
+        }
+
+        function getClosedTaskIds() {
+            try {
+                const raw = sessionStorage.getItem(CLOSED_TASKS_KEY);
+                const parsed = raw ? JSON.parse(raw) : [];
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function rememberClosedTask(taskId) {
+            const ids = new Set(getClosedTaskIds());
+            ids.add(taskId);
+            sessionStorage.setItem(CLOSED_TASKS_KEY, JSON.stringify([...ids]));
+        }
+
+        function forgetClosedTask(taskId) {
+            const ids = getClosedTaskIds().filter(id => id !== taskId);
+            sessionStorage.setItem(CLOSED_TASKS_KEY, JSON.stringify(ids));
+        }
+
+        function syncTaskSocketState(taskId, text, className) {
+            const task = tasksMap[taskId];
+            if (task && task.elements && task.elements.wsStatus) {
+                task.elements.wsStatus.textContent = text;
+                task.elements.wsStatus.className = className;
+            }
+            if (taskId === mainTaskId) {
+                ui.wsStatus.textContent = text;
+                ui.wsStatus.className = className;
+            }
+        }
+
+        function getSidebarTaskIds() {
+            return Array.from(document.querySelectorAll('#tasksContainer .task-card'))
+                .map(card => card.dataset.taskId)
+                .filter(Boolean);
+        }
+
+        function ensureMainTaskAssigned() {
+            const currentMain = mainTaskId ? tasksMap[mainTaskId] : null;
+            const sidebarTaskIds = getSidebarTaskIds().filter(taskId => tasksMap[taskId]);
+            if (!sidebarTaskIds.length) {
+                if (!currentMain) {
+                    resetMainMonitor();
+                }
+                return;
+            }
+
+            const bestSidebarTaskId = sidebarTaskIds
+                .sort((a, b) => getTaskPriority(tasksMap[b]) - getTaskPriority(tasksMap[a]))[0];
+
+            if (!currentMain) {
+                promoteToMain(bestSidebarTaskId);
+                return;
+            }
+
+            if (getTaskPriority(tasksMap[bestSidebarTaskId]) > getTaskPriority(currentMain)) {
+                promoteToMain(bestSidebarTaskId);
+            }
+        }
+
+        function removeTaskCard(taskId, rememberClose = true) {
+            const task = tasksMap[taskId];
+            if (!task) return;
+
+            if (task.ws && task.ws.readyState !== WebSocket.CLOSED) {
+                try { task.ws.close(); } catch (e) {}
+            }
+
+            if (task.elements && task.elements.card) {
+                task.elements.card.remove();
+            }
+
+            if (rememberClose) {
+                rememberClosedTask(taskId);
+            }
+
+            forgetTask(taskId);
+            delete tasksMap[taskId];
+
+            if (mainTaskId === taskId) {
+                resetMainMonitor();
+            }
+
+            ensureMainTaskAssigned();
+            storeActiveTasks();
+        }
+
+        function promoteToMain(taskId) {
+            mainTaskId = taskId;
+            const t = tasksMap[taskId];
+            if (!t) return;
+
+            ui.cancelButton.disabled = false;
+            ui.cancelButton.onclick = () => cancelTask(taskId);
+            ui.pauseResumeButton.disabled = false;
+            ui.pauseResumeButton.onclick = async () => {
+                if (t.status === 'RUNNING') {
+                    const ok = await pauseTaskApi(taskId);
+                    if (ok) { t.status = 'PAUSED'; ui.pauseResumeButton.textContent = 'Resume'; }
+                } else if (t.status === 'PAUSED') {
+                    const ok = await resumeTaskApi(taskId);
+                    if (ok) { t.status = 'RUNNING'; ui.pauseResumeButton.textContent = 'Stop'; }
+                }
+            };
+            setStatus(taskId, t.status || 'PENDING', t.stage || 'Queued', t.progress || 0, t.result || null, t.workerId || null);
+            syncTaskSocketState(taskId, t.socketStateText || 'Disconnected', t.socketStateClass || 'font-bold text-gray-500');
+        }
+
+
+        function setStatus(id, status, stage, progress, result = null, worker_id = null) {
+            const normalized = normalizeTaskSnapshot(status, stage, progress, result);
+            ui.taskId.textContent = id || 'N/A';
+            ui.taskStatus.textContent = normalized.status;
+            ui.taskStage.textContent = normalized.stage;
+            ui.taskWorker.textContent = worker_id || 'N/A';
+            if (worker_id) {
+                ui.taskWorker.className = worker_id === 'api1' ? 'font-semibold text-green-600' : 'font-semibold text-blue-600';
+            } else {
+                ui.taskWorker.className = 'font-semibold text-gray-400';
+            }
+
+            if (normalized.progress !== undefined && normalized.progress !== null) { 
+                const p = Math.floor(normalized.progress) || 0;
+                ui.progressBar.style.width = `${p}%`;
+                if (ui.progressPercent) ui.progressPercent.textContent = `${p}%`;
+                if (ui.progressStageLabel) ui.progressStageLabel.textContent = normalized.stage || '';
+            } else if (normalized.status === 'IDLE' || normalized.status === 'FAILED' || normalized.status === 'CANCELLED') {
+                ui.progressBar.style.width = `0%`;
+                if (ui.progressPercent) ui.progressPercent.textContent = `0%`;
+            }
+
+            updateResultUI(normalized.result);
+
+            ui.cancelButton.disabled = !id || normalized.status === 'COMPLETED' || normalized.status === 'FAILED' || normalized.status === 'CANCELLED';
+
+            if (ui.pauseResumeButton) {
+                if (!id || normalized.status === 'COMPLETED' || normalized.status === 'FAILED' || normalized.status === 'CANCELLED') {
+                    ui.pauseResumeButton.disabled = true;
+                } else if (normalized.status === 'RUNNING') {
+                    ui.pauseResumeButton.disabled = false; ui.pauseResumeButton.textContent = 'Stop';
+                } else if (normalized.status === 'PAUSED') {
+                    ui.pauseResumeButton.disabled = false; ui.pauseResumeButton.textContent = 'Resume';
+                } else {
+                    ui.pauseResumeButton.disabled = true;
+                }
+            }
+            
+            ui.taskStatus.className = 'font-bold ' + 
+                (normalized.status === 'PENDING' || normalized.status === 'RUNNING' || normalized.status === 'CANCELLATION_REQUESTED' ? 'text-yellow-600' : 
+                 normalized.status === 'COMPLETED' ? 'text-green-600' : 
+                 normalized.status === 'FAILED' || normalized.status === 'CANCELLED' ? 'text-red-600' : 'text-gray-600');
+        }
+
+
+    function getStoredTaskIds() {
+        try {
+            const raw = sessionStorage.getItem(ACTIVE_TASKS_KEY);
+            const parsed = raw ? JSON.parse(raw) : [];
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function storeActiveTasks() {
+        try {
+            const activeIds = Object.entries(tasksMap)
+                .filter(([, task]) => task && !['COMPLETED', 'FAILED', 'CANCELLED'].includes(task.status))
+                .map(([taskId]) => taskId);
+            sessionStorage.setItem(ACTIVE_TASKS_KEY, JSON.stringify(activeIds));
+        } catch (e) {
+        }
+    }
+
+    function rememberTask(taskId) {
+        const ids = new Set(getStoredTaskIds());
+        ids.add(taskId);
+        sessionStorage.setItem(ACTIVE_TASKS_KEY, JSON.stringify([...ids]));
+        forgetClosedTask(taskId);
+    }
+
+        function forgetTask(taskId) {
+            const ids = getStoredTaskIds().filter(id => id !== taskId);
+            sessionStorage.setItem(ACTIVE_TASKS_KEY, JSON.stringify(ids));
+        }
+
+        async function refreshTaskFromApi(taskId) {
+            const task = tasksMap[taskId];
+            if (!task) return;
+
+            try {
+                const headers = {};
+                const token = sessionStorage.getItem('hf_token');
+                if (token) headers['Authorization'] = 'Bearer ' + token;
+
+                const response = await fetch(`${BASE_URL}/api/tasks/${taskId}`, {
+                    headers,
+                    cache: 'no-store'
+                });
+                if (!response.ok) return;
+
+                const latestTask = await response.json();
+                updateTaskCard(
+                    latestTask.task_id,
+                    latestTask.status,
+                    latestTask.stage,
+                    latestTask.progress,
+                    latestTask.result,
+                    latestTask.worker_id
+                );
+            } catch (error) {
+                console.error('Failed to refresh task from API', taskId, error);
+            }
+        }
+
+        function startStatusPolling() {
+            if (statusPollTimer) return;
+
+            statusPollTimer = setInterval(() => {
+                Object.entries(tasksMap).forEach(([taskId, task]) => {
+                    if (!task || isTerminalStatus(task.status)) return;
+
+                    const socketClosed = !task.ws || task.ws.readyState === WebSocket.CLOSED;
+                    const isMainTask = taskId === mainTaskId;
+                    if (isMainTask || socketClosed) {
+                        refreshTaskFromApi(taskId);
+                    }
+                });
+            }, 1500);
+        }
+
+    function connectWebSocket(taskId) {
+
+            setTimeout(()=>{
+                try {
+                    if (!tasksMap[taskId]) return;
+                    if (tasksMap[taskId].ws && tasksMap[taskId].ws.readyState !== WebSocket.CLOSED) {
+                        return;
+                    }
+                    const socket = new WebSocket(WS_BASE_URL + '/ws/' + taskId);
+                    tasksMap[taskId].ws = socket;
+                    tasksMap[taskId].socketStateText = 'Connecting...';
+                    tasksMap[taskId].socketStateClass = 'font-bold text-yellow-500';
+                    syncTaskSocketState(taskId, 'Connecting...', 'font-bold text-yellow-500');
+
+                    socket.onopen = () => {
+                        tasksMap[taskId].socketStateText = 'Connected';
+                        tasksMap[taskId].socketStateClass = 'font-bold text-green-600';
+                        syncTaskSocketState(taskId, 'Connected', 'font-bold text-green-600');
+                    };
+
+                    socket.onmessage = (event) => {
+                        const data = JSON.parse(event.data);
+                        if (data.status) {
+                            updateTaskCard(taskId, data.status, data.stage, data.progress, data.result, data.worker_id);
+                        }
+                        if (data.status === 'COMPLETED' || data.status === 'FAILED' || data.status === 'CANCELLED') {
+                            socket.close();
+                        }
+                    };
+
+                    socket.onclose = () => {
+                        if (!tasksMap[taskId]) return;
+                        tasksMap[taskId].socketStateText = 'Disconnected';
+                        tasksMap[taskId].socketStateClass = 'font-bold text-gray-500';
+                        syncTaskSocketState(taskId, 'Disconnected', 'font-bold text-gray-500');
+                        if (!isTerminalStatus(tasksMap[taskId].status)) {
+                            refreshTaskFromApi(taskId);
+                        }
+                    };
+
+                    socket.onerror = (err) => {
+                        console.error('WS error', err);
+                        tasksMap[taskId].socketStateText = 'Error';
+                        tasksMap[taskId].socketStateClass = 'font-bold text-red-600';
+                        syncTaskSocketState(taskId, 'Error', 'font-bold text-red-600');
+                        refreshTaskFromApi(taskId);
+                    };
+                } catch(e) {
+                    console.error('Failed to create WS', e);
+                }
+            }, 50);
+        }
+
+        async function startTask() {
+            ui.messageBox.textContent = '';
+            ui.startButton.disabled = true;
+            setStatus(null, 'IDLE', 'Requesting start...', 0, null); 
+            
+            const nodes = parseInt(ui.nodes.value);
+            const iterations = parseInt(ui.iterations.value);
+
+            if (nodes > 100000) {
+                ui.messageBox.textContent = 'Помилка: Кількість вузлів перевищує ліміт (100,000)!';
+                ui.startButton.disabled = false;
+                return;
+            }
+
+            try {
+                const headers = { 'Content-Type': 'application/json' };
+                const token = sessionStorage.getItem('hf_token');
+                if (token) headers['Authorization'] = 'Bearer ' + token;
+                const response = await fetch(`${API_TASKS_URL}/start`, {
+                    method: 'POST',
+                    headers,
+                    cache: 'no-store',
+                    body: JSON.stringify({ nodes, iterations })
+                });
+
+                const data = await response.json();
+                if (response.status === 200 || response.status === 202) {
+                    const taskId = data.task_id;
+                    const mainFree = !mainTaskId || (tasksMap[mainTaskId] && ['COMPLETED','FAILED','CANCELLED'].includes(tasksMap[mainTaskId].status));
+                    const assignToMain = mainFree;
+                    addTaskCard(taskId, data.status, assignToMain);
+                    rememberTask(taskId);
+                    connectWebSocket(taskId);
+                    ui.messageBox.textContent = 'Завдання успішно відправлено! Connecting WS...';
+                } else if (response.status === 400) {
+                    ui.messageBox.textContent = `Помилка API: ${data.detail}`;
+                    setStatus(null, 'IDLE', 'Validation failed', 0, null);
+                } else {
+                    ui.messageBox.textContent = 'Невідома помилка при запуску завдання.';
+                }
+
+            } catch (error) {
+                console.error("Fetch Error:", error);
+                ui.messageBox.textContent = 'Помилка мережі. Перевірте, чи запущений Uvicorn сервер.';
+                setStatus(null, 'IDLE', 'Network Error', 0, null);
+            } finally {
+                ui.startButton.disabled = false;
+            }
+        }
+
+        async function cancelTask(taskId) {
+            if (!taskId) return;
+            const el = tasksMap[taskId] && tasksMap[taskId].elements;
+            if (el) el.cancelBtn.disabled = true;
+            try {
+                const headers = {};
+                const token = sessionStorage.getItem('hf_token');
+                if (token) headers['Authorization'] = 'Bearer ' + token;
+                const response = await fetch(`${API_TASKS_URL}/${taskId}/cancel`, { method: 'POST', headers });
+                const data = await response.json().catch(()=>({message:'cancel request sent'}));
+                if (response.ok) {
+                    ui.messageBox.textContent = data.message || 'Cancel requested';
+                } else {
+                    ui.messageBox.textContent = `Помилка скасування: ${data.message || data.detail}`;
+                }
+            } catch (error) {
+                ui.messageBox.textContent = 'Помилка мережі при скасуванні.';
+            }
+        }
+
+        async function pauseTaskApi(taskId) {
+            const headers = {};
+            const token = sessionStorage.getItem('hf_token');
+            if (token) headers['Authorization'] = 'Bearer ' + token;
+            try {
+                const resp = await fetch(`${API_TASKS_URL}/${taskId}/pause`, { method: 'POST', headers });
+                return resp.ok;
+            } catch(e) { return false; }
+        }
+
+        async function resumeTaskApi(taskId) {
+            const headers = {};
+            const token = sessionStorage.getItem('hf_token');
+            if (token) headers['Authorization'] = 'Bearer ' + token;
+            try {
+                const resp = await fetch(`${API_TASKS_URL}/${taskId}/resume`, { method: 'POST', headers });
+                return resp.ok;
+            } catch(e) { return false; }
+        }
+
+        function addTaskCard(taskId, initialStatus='PENDING') {
+            const container = document.getElementById('tasksContainer');
+            const isMain = arguments.length >= 3 ? arguments[2] : false;
+            if (isMain) {
+                mainTaskId = taskId;
+                if (!tasksMap[taskId]) {
+                    tasksMap[taskId] = { ws: null, status: initialStatus, stage: 'Starting...', progress: 0, result: null, workerId: null, elements: null };
+                }
+
+                ui.taskId.textContent = taskId;
+                ui.taskStatus.textContent = initialStatus;
+                ui.cancelButton.disabled = false;
+                ui.cancelButton.onclick = () => cancelTask(taskId);
+                setStatus(taskId, initialStatus, 'Starting...', 0, null);
+                return;
+            }
+
+            const card = document.createElement('div');
+            card.className = 'task-card';
+            card.dataset.taskId = taskId;
+            const meta = document.createElement('div'); meta.className='task-meta';
+            const title = document.createElement('div'); title.innerHTML = `<strong>Task:</strong> <span class="font-mono">${taskId}</span>`;
+            const right = document.createElement('div');
+            const wsStatus = document.createElement('span'); wsStatus.textContent='Connecting...'; wsStatus.className='font-bold text-yellow-500';
+            const collapseBtn = document.createElement('button'); collapseBtn.className='btn btn-ghost'; collapseBtn.textContent='▾'; collapseBtn.title='Collapse/Expand'; collapseBtn.style.marginLeft='8px';
+            const stopResumeBtn = document.createElement('button'); stopResumeBtn.className='btn btn-ghost'; stopResumeBtn.textContent='Stop'; stopResumeBtn.style.marginLeft='8px';
+            const cancelBtn = document.createElement('button'); cancelBtn.className='btn btn-danger'; cancelBtn.textContent='Cancel';
+            const closeBtn = document.createElement('button'); closeBtn.className='btn btn-ghost task-close-btn'; closeBtn.textContent='×'; closeBtn.title='Hide this card';
+            cancelBtn.addEventListener('click', ()=>cancelTask(taskId));
+            closeBtn.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                const task = tasksMap[taskId];
+                if (!task || !isDismissibleStatus(task.status)) {
+                    ui.messageBox.textContent = 'Можна приховати тільки неактивні або завершені картки.';
+                    return;
+                }
+                removeTaskCard(taskId, true);
+            });
+            right.appendChild(wsStatus); right.appendChild(collapseBtn); right.appendChild(stopResumeBtn); right.appendChild(cancelBtn); right.appendChild(closeBtn);
+            meta.appendChild(title); meta.appendChild(right);
+
+            const progressWrap = document.createElement('div'); progressWrap.className='progress-wrap';
+            progressWrap.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div id="pt-${taskId}" style="font-weight:700;color:var(--accent-2);">0%</div><div style="font-size:0.9rem;color:var(--muted)"></div></div><div style="flex:1"><div class="w-full bg-gray-200 rounded-full h-3.5"><div id="pb-${taskId}" class="bg-blue-500 h-3.5 rounded-full" style="width:0%"></div></div></div>`;
+
+            const stage = document.createElement('div'); stage.className='text-sm'; stage.textContent='Queued';
+            
+            const workerInfo = document.createElement('div'); workerInfo.className='text-sm'; workerInfo.style.marginTop='4px';
+            workerInfo.innerHTML = '<strong>Worker:</strong> <span class="font-semibold text-gray-400">N/A</span>';
+            const workerSpan = workerInfo.querySelector('span');
+
+            card.appendChild(meta); card.appendChild(progressWrap); card.appendChild(stage); card.appendChild(workerInfo);
+            container.prepend(card);
+
+            const progressBarEl = document.getElementById('pb-'+taskId);
+            const progressTextEl = document.getElementById('pt-'+taskId);
+            tasksMap[taskId] = { ws: null, status: initialStatus, stage: 'Queued', progress: 0, result: null, workerId: null, collapsed: false, socketStateText: 'Connecting...', socketStateClass: 'font-bold text-yellow-500', elements: { card, title, wsStatus, cancelBtn, stopResumeBtn, collapseBtn, closeBtn, progressBar: progressBarEl, progressText: progressTextEl, stage, worker: workerSpan } };
+
+            collapseBtn.addEventListener('click', (ev)=>{
+                ev.stopPropagation();
+                const collapsed = tasksMap[taskId].collapsed = !tasksMap[taskId].collapsed;
+                if (collapsed) {
+                    progressWrap.style.display = 'none';
+                    stage.style.display = 'none';
+                    collapseBtn.textContent = '▸';
+                } else {
+                    progressWrap.style.display = '';
+                    stage.style.display = '';
+                    collapseBtn.textContent = '▾';
+                }
+            });
+
+            stopResumeBtn.addEventListener('click', async (ev)=>{
+                ev.stopPropagation();
+                if (tasksMap[taskId].status === 'RUNNING') {
+                    await pauseTaskApi(taskId);
+                    tasksMap[taskId].status = 'PAUSED';
+                    stopResumeBtn.textContent = 'Resume';
+                } else if (tasksMap[taskId].status === 'PAUSED') {
+                    await resumeTaskApi(taskId);
+                    tasksMap[taskId].status = 'RUNNING';
+                    stopResumeBtn.textContent = 'Stop';
+                }
+            });
+
+            card.addEventListener('click', () => {
+                promoteToMain(taskId);
+            });
+
+            updateTaskCard(taskId, initialStatus, 'Queued', 0, null);
+        }
+
+        function updateTaskCard(taskId, status, stage, progress, result, worker_id = null){
+            const t = tasksMap[taskId]; if (!t) return;
+            const normalized = normalizeTaskSnapshot(status, stage, progress, result);
+            t.status = normalized.status;
+            t.stage = normalized.stage;
+            t.progress = normalized.progress;
+            t.result = normalized.result;
+            t.workerId = worker_id || null;
+            const el = t.elements;
+            if (el && el.stage) el.stage.textContent = normalized.stage || (el.stage.textContent || '');
+            if (el && el.progressBar) el.progressBar.style.width = `${Math.floor(normalized.progress||0)}%`;
+            if (el && el.progressText) el.progressText.textContent = `${Math.floor(normalized.progress||0)}%`;
+
+            // Update worker display in task card if element exists
+            if (el && el.worker) {
+                el.worker.textContent = worker_id || 'N/A';
+                if (worker_id === 'api1') {
+                    el.worker.className = 'font-semibold text-green-600';
+                } else if (worker_id === 'api2') {
+                    el.worker.className = 'font-semibold text-blue-600';
+                } else {
+                    el.worker.className = 'font-semibold text-gray-400';
+                }
+            }
+            if (el && el.closeBtn) {
+                el.closeBtn.disabled = !isDismissibleStatus(normalized.status);
+            }
+
+            if (normalized.status === 'COMPLETED') {
+                forgetTask(taskId);
+                syncTaskSocketState(taskId, 'Completed', 'font-bold text-green-600');
+                if (el && el.cancelBtn) el.cancelBtn.disabled = true;
+                if (el && el.stopResumeBtn) el.stopResumeBtn.disabled = true;
+                if (t.ws && t.ws.readyState !== WebSocket.CLOSED) {
+                    try { t.ws.close(); } catch (e) {}
+                }
+                if (el && el.card && normalized.result) {
+                    let sum = el.card.querySelector('.task-result-summary');
+                    if (!sum) {
+                        sum = document.createElement('div');
+                        sum.className = 'text-sm task-result-summary';
+                        sum.style.marginTop = '8px';
+                        el.card.appendChild(sum);
+                    }
+                    sum.innerHTML = `<strong>Max:</strong> ${normalized.result.max_temperature_c} C — <strong>Avg:</strong> ${normalized.result.average_temperature_c} C`;
+                }
+                if (taskId === mainTaskId) {
+                    setStatus(taskId, normalized.status, normalized.stage, normalized.progress, normalized.result, worker_id);
+                    ensureMainTaskAssigned();
+                }
+            } else if (normalized.status === 'FAILED' || normalized.status === 'CANCELLED') {
+                forgetTask(taskId);
+                syncTaskSocketState(taskId, normalized.status, 'font-bold text-red-600');
+                if (el && el.cancelBtn) el.cancelBtn.disabled=true;
+                if (el && el.stopResumeBtn) el.stopResumeBtn.disabled = true;
+                if (taskId === mainTaskId) {
+                    setStatus(taskId, normalized.status, normalized.stage, normalized.progress, normalized.result, worker_id);
+                    ensureMainTaskAssigned();
+                }
+            } else {
+                syncTaskSocketState(taskId, normalized.status, normalized.status === 'PAUSED' ? 'font-bold text-gray-500' : 'font-bold text-yellow-600');
+                if (taskId === mainTaskId) setStatus(taskId, normalized.status, normalized.stage, normalized.progress, normalized.result, worker_id);
+            }
+            storeActiveTasks();
+        }
+
+        async function restoreActiveTasks() {
+            const headers = {};
+            const token = sessionStorage.getItem('hf_token');
+            if (token) headers['Authorization'] = 'Bearer ' + token;
+            const ids = new Set(getStoredTaskIds());
+            const closedIds = new Set(getClosedTaskIds());
+
+            try {
+                const response = await fetch('/api/account/active-tasks', {
+                    headers,
+                    cache: 'no-store'
+                });
+                if (response.ok) {
+                    const serverTasks = await response.json();
+                    for (const task of serverTasks) {
+                        if (closedIds.has(task.task_id)) continue;
+                        ids.add(task.task_id);
+                        if (tasksMap[task.task_id]) continue;
+                        const assignToMain = !mainTaskId;
+                        addTaskCard(task.task_id, task.status || 'PENDING', assignToMain);
+                        updateTaskCard(task.task_id, task.status, task.stage, task.progress, task.result, task.worker_id);
+                        if (!['COMPLETED', 'FAILED', 'CANCELLED'].includes(task.status)) {
+                            connectWebSocket(task.task_id);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to restore tasks from account endpoint', error);
+            }
+
+            if (!ids.size) return;
+
+            for (const taskId of ids) {
+                if (closedIds.has(taskId)) continue;
+                if (tasksMap[taskId]) continue;
+                try {
+                    const response = await fetch(`${BASE_URL}/api/tasks/${taskId}`, {
+                        headers,
+                        cache: 'no-store'
+                    });
+                    if (!response.ok) {
+                        forgetTask(taskId);
+                        continue;
+                    }
+                    const task = await response.json();
+                    const assignToMain = !mainTaskId;
+                    addTaskCard(task.task_id, task.status || 'PENDING', assignToMain);
+                    updateTaskCard(task.task_id, task.status, task.stage, task.progress, task.result, task.worker_id);
+                    if (!['COMPLETED', 'FAILED', 'CANCELLED'].includes(task.status)) {
+                        connectWebSocket(task.task_id);
+                    } else {
+                        forgetTask(task.task_id);
+                    }
+                } catch (error) {
+                    console.error('Failed to restore task', taskId, error);
+                }
+            }
+
+            ensureMainTaskAssigned();
+            storeActiveTasks();
+        }
+
+        async function fetchHistory() {
+            ui.historyOutput.classList.remove('hidden');
+            ui.historyOutput.textContent = 'Завантаження історії...';
+            
+            try {
+                const token = sessionStorage.getItem('hf_token');
+                const headers = {};
+                if (token) headers['Authorization'] = 'Bearer ' + token;
+                const response = await fetch(token ? '/api/account/history' : `${API_TASKS_URL}/history`, {headers});
+                const data = await response.json();
+
+                let output = 'Історія Завдань (JSON):\n' + JSON.stringify(data, null, 2);
+
+                const completedTask = data.find(t => t.status === 'COMPLETED' && t.result);
+                
+                if (completedTask) {
+                    const result = completedTask.result;
+
+                    let resultText = `\n\n--- Результат (Task ${completedTask.task_id}) ---\n`;
+                    resultText += `Максимальна Температура (C): ${result.max_temperature_c}\n`;
+                    resultText += `Середня Температура (C): ${result.average_temperature_c}\n`;
+                    resultText += `Розмір Сітки: ${result.grid_dimensions}\n`;
+                    resultText += `Час обчислення: ${result.execution_time_seconds} сек\n`;
+
+                    const resultHtml = `
+                        <h3 class="text-xl font-semibold mt-4 mb-2 text-green-700">Візуалізація Теплового Поля</h3>
+                        <img src="https://placehold.co/400x150/10B981/ffffff?text=Max+Temp:${result.max_temperature_c}C" 
+                             alt="Thermal Simulation Result" 
+                             class="rounded-lg mb-4 border border-green-600 mx-auto"/>
+                    `;
+
+                    ui.historyOutput.innerHTML = resultHtml + `<pre class="p-0 m-0">${resultText + output}</pre>`;
+                    
+                } else {
+                    ui.historyOutput.textContent = output;
+                }
+
+                ui.messageBox.textContent = 'Історія завантажена.';
+                const profileHistory = document.getElementById('profile-history');
+                if (profileHistory) {
+                    profileHistory.style.display = 'block';
+                }
+
+            } catch (error) {
+                ui.messageBox.textContent = 'Помилка завантаження історії.';
+                ui.historyOutput.textContent = 'Не вдалося завантажити історію завдань.';
+            }
+        }
+
+                window.onload = () => {
+                        setStatus(null, 'IDLE', 'Ready to start', 0, null);
+                        startStatusPolling();
+                        restoreActiveTasks();
+                };
+                window.addEventListener('pageshow', () => {
+                        startStatusPolling();
+                        restoreActiveTasks();
+                });
+        </script>
+
+    <script>
+        (function(){
+            try {
+                const userInfo = document.getElementById('userInfo');
+                const appHeaderAvatar = document.getElementById('appHeaderAvatar');
+                const appHeaderUsername = document.getElementById('appHeaderUsername');
+                const currentUsername = sessionStorage.getItem('hf_username') || 'unknown';
+                if (appHeaderUsername) {
+                    appHeaderUsername.textContent = currentUsername;
+                }
+                if (appHeaderAvatar) {
+                    appHeaderAvatar.textContent = currentUsername.slice(0, 1).toUpperCase();
+                }
+                if (userInfo) {
+                    userInfo.setAttribute('aria-label', 'Current user');
+                }
+
+                const token = sessionStorage.getItem('hf_token');
+                if (token) {
+                    fetch('/api/account/profile', { headers: { 'Authorization': 'Bearer ' + token } })
+                        .then((resp) => resp.ok ? resp.json() : null)
+                        .then((profile) => {
+                            if (!profile) return;
+                            if (appHeaderUsername) {
+                                appHeaderUsername.textContent = profile.username || currentUsername;
+                            }
+                            if (appHeaderAvatar) {
+                                if (profile.avatar_url) {
+                                    appHeaderAvatar.classList.add('has-image');
+                                    appHeaderAvatar.innerHTML = `<img src="${profile.avatar_url}" alt="Profile photo" />`;
+                                } else {
+                                    appHeaderAvatar.classList.remove('has-image');
+                                    appHeaderAvatar.textContent = (profile.username || currentUsername).slice(0, 1).toUpperCase();
+                                }
+                            }
+                        })
+                        .catch(() => {});
+                }
+
+                const logoutBtn = document.getElementById('logoutBtn');
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', () => {
+                        sessionStorage.removeItem(ACTIVE_TASKS_KEY);
+                        sessionStorage.removeItem(CLOSED_TASKS_KEY);
+                        sessionStorage.removeItem('hf_username');
+                        localStorage.removeItem('hf_username');
+                        sessionStorage.removeItem('hf_token');
+                        window.location.href = '/';
+                    });
+                }
+            } catch (e) {
+            }
+        })();
+    </script>
+</body>
+</html>
