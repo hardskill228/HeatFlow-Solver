@@ -1,86 +1,86 @@
-# Coursework Writing Brief
+# Бриф для написання курсової роботи
 
-Use this brief as source material for generating a full coursework report in Ukrainian.
+Використовуй цей бриф як вихідний матеріал для генерації повного тексту курсової роботи українською мовою.
 
-## Output Requirements
+## Вимоги до результату
 
-Generate a complete coursework text in Ukrainian for approximately 16 pages of A4 text.
+Потрібно згенерувати повний текст курсової роботи українською мовою обсягом приблизно 16 сторінок формату A4.
 
-Formatting target:
+Параметри оформлення:
 
-- font: Times New Roman
-- size: 14 pt
-- academic style
-- coherent technical narrative
-- no bullet overload in the final document
-- use full paragraphs, transitions, and explanations
+- шрифт: Times New Roman
+- розмір шрифту: 14 pt
+- стиль викладу: академічний
+- текст має бути логічним, послідовним і технічно змістовним
+- у фінальному документі не зловживати списками
+- основний текст має складатися з повних абзаців, пояснень і зв’язних переходів між розділами
 
-## Topic
+## Тема роботи
 
-Web application for solving a heat conduction problem with support for user authorization, task queueing, progress tracking, history of computations, and multi-service Docker deployment.
+Розробка вебзастосунку для моделювання процесів теплопровідності з підтримкою авторизації користувачів, черги задач, відстеження прогресу виконання, збереження історії обчислень і багатосервісного Docker-розгортання.
 
-## Working Title
+## Робоча назва курсової
 
-Development of a web application for numerical simulation of heat conduction processes with load balancing and asynchronous task execution.
+Розробка вебзастосунку для чисельного моделювання процесів теплопровідності з балансуванням навантаження та асинхронним виконанням обчислювальних задач.
 
-## Core Idea of the Project
+## Загальна ідея проєкту
 
-The project is a web system called `HeatFlow Solver`. It allows a user to:
+Проєкт має назву `HeatFlow Solver`. Це вебсистема, яка дозволяє користувачу:
 
-- register and log in
-- create a computational task with parameters
-- run a heat conduction simulation
-- observe execution progress in real time
-- view final results
-- store task history
-- work with a PostgreSQL database
-- run the system locally or through Docker Compose
+- реєструватися та входити в систему
+- створювати обчислювальну задачу з параметрами
+- запускати симуляцію теплопровідності
+- спостерігати за прогресом виконання в реальному часі
+- переглядати фінальні результати обчислень
+- зберігати історію виконаних задач
+- використовувати PostgreSQL для збереження даних
+- запускати систему локально або через Docker Compose
 
-The project combines mathematical modeling, backend development, frontend development, database design, asynchronous execution, and deployment.
+Проєкт поєднує математичне моделювання, backend-розробку, frontend-розробку, проєктування бази даних, асинхронне виконання задач і контейнеризоване розгортання.
 
-## Purpose of the Coursework
+## Мета курсової роботи
 
-The purpose of the coursework is to design and implement a web-oriented software system for modeling heat conduction processes, with support for:
+Метою курсової роботи є проєктування та реалізація веборієнтованої програмної системи для моделювання процесів теплопровідності, яка забезпечує:
 
-- interactive user interaction through a browser
-- secure user authentication
-- asynchronous processing of heavy computations
-- real-time status updates
-- persistent storage of users and task history
-- containerized deployment
+- зручну взаємодію користувача через браузер
+- автентифікацію та розмежування доступу
+- асинхронну обробку ресурсоємних обчислень
+- відображення прогресу виконання в реальному часі
+- збереження користувачів і історії задач у базі даних
+- розгортання в контейнерному середовищі
 
-## Object and Subject
+## Об’єкт і предмет дослідження
 
-Object of research:
+Об’єкт дослідження:
 
-web technologies for developing distributed applied systems with computational functionality.
+вебтехнології розробки прикладних інформаційних систем із підтримкою складних обчислень.
 
-Subject of research:
+Предмет дослідження:
 
-methods, models, and software tools for implementing a web application for heat conduction simulation using FastAPI, PostgreSQL, WebSocket communication, and Docker infrastructure.
+методи, моделі та програмні засоби реалізації вебзастосунку для моделювання теплопровідності з використанням FastAPI, PostgreSQL, WebSocket-зв’язку та Docker-інфраструктури.
 
-## Relevance
+## Актуальність теми
 
-The topic is relevant because numerical modeling of physical processes is actively used in engineering and scientific practice. At the same time, web technologies make such systems more accessible, because the user can interact with the computational module through a browser without installing complex local software. The work is also relevant due to the need to combine computational intensity with a convenient interface, server-side processing, task queueing, and result persistence.
+Актуальність теми зумовлена тим, що чисельне моделювання фізичних процесів широко використовується в інженерії, науці та прикладних дослідженнях. Одночасно сучасні вебтехнології дають змогу робити такі системи більш доступними, оскільки користувач може працювати з обчислювальним модулем через браузер без встановлення спеціалізованого локального програмного забезпечення. Крім того, актуальність роботи підсилюється необхідністю поєднання ресурсоємних обчислень із зручним інтерфейсом, серверною обробкою, чергою задач, збереженням історії виконання та масштабованим розгортанням.
 
-## Main Functional Capabilities
+## Основні функціональні можливості системи
 
-The application supports the following functions:
+Система підтримує такі функції:
 
-1. User registration and login
-2. Storage of user profile data
-3. Creation of a computational task with configurable parameters
-4. Launch of heat conduction simulation
-5. Real-time progress monitoring
-6. Display of worker/server that processes the task
-7. Cancellation and pause/resume controls for tasks
-8. Task history and profile page
-9. Leaderboard page
-10. PostgreSQL persistence
-11. Docker-based deployment
-12. Multi-service architecture with NGINX and two API instances
+1. Реєстрація та вхід користувачів
+2. Збереження профілю користувача
+3. Створення обчислювальної задачі з параметрами
+4. Запуск симуляції теплопровідності
+5. Моніторинг прогресу в реальному часі
+6. Відображення ідентифікатора воркера або сервера, що обробляє задачу
+7. Скасування, пауза та відновлення задач
+8. Перегляд історії задач у профілі
+9. Відображення leaderboard-сторінки
+10. Використання PostgreSQL для постійного збереження даних
+11. Docker-розгортання системи
+12. Багатосервісна архітектура з NGINX і двома API-серверами
 
-## Technologies Used
+## Технології, використані в проєкті
 
 Backend:
 
@@ -94,191 +94,202 @@ Frontend:
 - CSS
 - Vanilla JavaScript
 
-Database:
+База даних:
 
 - PostgreSQL
 
-Deployment and infrastructure:
+Інфраструктура та розгортання:
 
 - Docker
 - Docker Compose
 - NGINX
 
-Other concepts:
+Додаткові технологічні підходи:
 
 - WebSocket
 - REST API
-- asynchronous communication
-- task queue
-- load balancing
+- асинхронна взаємодія
+- черга задач
+- балансування навантаження
 
-## Architectural Description
+## Опис архітектури системи
 
-The system has a client-server architecture.
+Система має клієнт-серверну архітектуру.
 
-The browser acts as the client layer. It provides:
+Клієнтський рівень представлений браузером. Саме через нього користувач взаємодіє із системою. Інтерфейс надає:
 
-- login and registration forms
-- task creation form
-- progress monitoring interface
-- profile and history pages
+- форму входу та реєстрації
+- форму створення задачі
+- сторінку моніторингу прогресу
+- сторінку профілю та історії
+- сторінку рейтингу
 
-The backend is implemented with FastAPI. It exposes HTTP endpoints for authentication, profile operations, task creation, task status retrieval, and task history. It also provides WebSocket endpoints for real-time progress updates.
+Серверна частина реалізована на FastAPI. Вона надає HTTP API для:
 
-The database layer is implemented with PostgreSQL. It stores:
+- реєстрації
+- входу користувача
+- створення задач
+- отримання статусу задач
+- отримання історії обчислень
+- роботи з профілем користувача
 
-- users
-- tokens
-- task queue data
-- task history
-- additional user profile information
+Також FastAPI реалізує WebSocket-канал для передачі прогресу виконання задач у режимі, близькому до реального часу.
 
-The deployment layer contains Docker Compose configuration with several services:
+Рівень збереження даних реалізовано за допомогою PostgreSQL. База даних зберігає:
 
-- PostgreSQL container
-- API server 1
-- API server 2
-- NGINX reverse proxy and load balancer
+- користувачів
+- токени автентифікації
+- чергу задач
+- історію виконаних задач
+- розширені дані профілю користувача
 
-NGINX distributes incoming requests between API instances. This demonstrates practical elements of distributed system architecture and load balancing.
+На рівні розгортання використовується Docker Compose, у якому визначено декілька сервісів:
 
-## Computational Part
+- контейнер PostgreSQL
+- API сервер 1
+- API сервер 2
+- NGINX як reverse proxy і балансувальник навантаження
 
-The application imitates or performs a numerical solution of a heat conduction problem. The logic is implemented as a heavy backend computation that progresses through several stages:
+NGINX розподіляє запити між двома екземплярами API-сервера. Такий підхід демонструє елементи масштабованої та відмовостійкої архітектури.
 
-1. initialization
-2. mesh preparation
-3. stiffness matrix assembly
-4. iterative solver stage
-5. result generation
+## Опис обчислювальної частини
 
-During the computation, the system produces:
+Застосунок реалізує імітацію або чисельне розв’язання задачі теплопровідності. Обчислення виконується на backend-рівні як ресурсоємний процес, що проходить через кілька стадій:
 
-- current progress percentage
-- stage description
-- final maximum temperature
-- final average temperature
-- execution time
-- time series data for visualization and analysis
+1. Ініціалізація
+2. Підготовка сітки
+3. Формування матриці жорсткості
+4. Ітеративне обчислення
+5. Формування фінального результату
 
-The work should explain that the computational module is integrated into a web application, which is one of the important practical outcomes of the coursework.
+Під час обчислення система формує:
 
-## Database Description
+- поточний відсоток виконання
+- текстовий опис стадії
+- фінальну максимальну температуру
+- фінальну середню температуру
+- час виконання
+- часовий ряд даних для подальшого відображення або аналізу
 
-The database is used not only for user authentication but also for computation lifecycle support.
+У тексті курсової потрібно підкреслити, що обчислювальний модуль інтегрований саме у вебзастосунок, а не існує окремо. Це є важливою практичною цінністю проєкту.
 
-The report should mention that PostgreSQL stores:
+## Опис бази даних
 
-- registered users
-- authentication tokens
-- queued tasks
-- active tasks
-- completed task history
-- result payloads and metadata
+База даних використовується не лише для авторизації користувачів, а й для підтримки повного життєвого циклу обчислювальних задач.
 
-This makes the system more reliable than a purely in-memory solution, because state is preserved and can be reused across multiple API instances.
+У звіті потрібно зазначити, що PostgreSQL зберігає:
 
-## Why Asynchronous Processing Is Needed
+- зареєстрованих користувачів
+- токени доступу
+- задачі в черзі
+- активні задачі
+- історію завершених задач
+- результат обчислень і супровідні метадані
 
-Heat conduction simulation is computationally expensive. If the server processed such tasks synchronously in the request thread, the interface would freeze and the user would receive a poor experience. Therefore, tasks are separated from the immediate request cycle. The system can start a task, return control to the user, and then stream progress updates while the computation continues.
+Це робить систему більш надійною, ніж рішення, яке повністю залежить від тимчасового стану в оперативній пам’яті.
 
-This demonstrates one of the central engineering ideas of the coursework: separation of user interaction from long-running computation.
+## Чому потрібна асинхронна обробка задач
 
-## Real-Time Progress Monitoring
+Симуляція теплопровідності є ресурсоємною операцією. Якщо виконувати такі обчислення синхронно в межах одного HTTP-запиту, інтерфейс працюватиме повільно, а користувачеві доведеться чекати завершення без проміжного зворотного зв’язку. Тому в системі використовується підхід, за якого задача запускається окремо від миттєвої взаємодії з користувачем. Після створення задачі користувач одразу отримує відповідь від сервера, а далі спостерігає за прогресом її виконання в реальному часі.
 
-An important feature of the system is task monitoring via WebSocket. The report should explain that unlike ordinary polling, WebSocket allows the server to deliver progress updates in near real time. This improves interactivity and makes the system suitable for long-running calculations.
+Це демонструє одну з ключових інженерних ідей курсової роботи: відокремлення інтерфейсної взаємодії від довготривалих обчислень.
 
-Progress monitoring shows:
+## Відстеження прогресу в реальному часі
 
-- current status
-- execution stage
-- worker identifier
-- percentage of completion
-- final result
+Важливою особливістю системи є моніторинг задач через WebSocket. У курсовій потрібно пояснити, що на відміну від звичайного періодичного опитування сервера, WebSocket дозволяє оперативно передавати зміни статусу задачі на клієнтський бік. Це покращує інтерактивність системи та робить її зручною для роботи з довготривалими обчисленнями.
 
-## Load Balancing and Multi-Server Operation
+Моніторинг прогресу відображає:
 
-One of the practical strengths of the coursework is the presence of two API servers behind NGINX. This is useful to describe as an element of scalability and fault tolerance.
+- поточний статус задачі
+- стадію виконання
+- ідентифікатор воркера
+- відсоток виконання
+- фінальний результат
 
-The report should explain that:
+## Балансування навантаження та багатосерверний режим
 
-- requests come to NGINX
-- NGINX forwards them to one of two API servers
-- both servers work with the same PostgreSQL database
-- this architecture improves distribution of requests
-- the approach reflects real deployment practices for web systems
+Однією з сильних сторін проєкту є використання двох API-серверів за NGINX. Це доцільно описати як елемент масштабованості та відмовостійкості.
 
-## Security and Authentication
+У курсовій варто пояснити, що:
 
-The application supports account creation and login. Authentication data is processed on the server side, and users are identified by tokens. The report should state that even though the project is educational, it includes a practical access-control mechanism and user separation.
+- користувацькі запити надходять на NGINX
+- NGINX перенаправляє їх на один із двох API-серверів
+- обидва сервери працюють із єдиною базою PostgreSQL
+- така архітектура дає змогу розподіляти навантаження
+- підхід наближений до практик реального розгортання вебсистем
 
-## Pages and User Interface
+## Автентифікація та безпека
 
-The system contains several user-facing pages:
+Система підтримує створення облікових записів і вхід користувачів. Дані автентифікації перевіряються на сервері, а користувачі ідентифікуються за токенами. У тексті слід зазначити, що навіть попри навчальний характер проєкту, у ньому реалізовано практичний механізм розмежування доступу та персоналізації роботи з задачами.
 
-- login and registration page
-- main application page for launching tasks
-- profile page with user data and task history
-- leaderboard page
+## Сторінки та інтерфейс користувача
 
-The interface is built to allow a user to move from authentication to computation and then to result analysis without leaving the web environment.
+Система містить кілька основних сторінок:
 
-## Practical Value
+- сторінку входу та реєстрації
+- головну сторінку запуску задач
+- сторінку профілю з історією
+- сторінку рейтингу користувачів
 
-The practical value of the coursework is that it demonstrates a complete cycle of web application development:
+Інтерфейс побудований так, щоб користувач міг послідовно пройти повний сценарій роботи: увійти в систему, створити задачу, спостерігати за її виконанням і переглянути результат.
 
-- problem statement
-- architecture design
-- backend implementation
-- frontend implementation
-- database integration
-- asynchronous communication
-- Docker deployment
+## Практичне значення роботи
 
-This makes the project suitable not only as an educational coursework but also as a prototype for more advanced engineering systems.
+Практичне значення курсової полягає в тому, що вона демонструє повний цикл створення сучасного вебзастосунку:
 
-## What the Report Should Contain
+- постановка задачі
+- проєктування архітектури
+- реалізація backend-частини
+- реалізація frontend-частини
+- інтеграція з базою даних
+- асинхронна взаємодія
+- контейнеризоване розгортання
 
-Generate a full coursework structure with the following logical parts:
+Це робить проєкт придатним не лише як навчальну роботу, а і як базовий прототип прикладної інженерної системи.
 
-1. Title-like introductory part
-2. Introduction
-3. Relevance of the topic
-4. Purpose and objectives of the work
-5. Object and subject of research
-6. Review of technologies and methods
-7. System architecture
-8. Description of backend implementation
-9. Description of frontend implementation
-10. Database design and data storage
-11. Description of computational module
-12. Task queue and progress monitoring
-13. Docker deployment and multi-service infrastructure
-14. Testing and practical verification
-15. Advantages and limitations of the developed system
-16. Conclusions
+## Що має містити курсова робота
 
-## Writing Instructions For ChatGPT
+Потрібно згенерувати повноцінний текст курсової роботи з такою логічною структурою:
 
-Write in formal Ukrainian academic style.
+1. Вступ
+2. Актуальність теми
+3. Мета і завдання роботи
+4. Об’єкт і предмет дослідження
+5. Огляд технологій і методів
+6. Аналіз предметної області
+7. Проєктування архітектури системи
+8. Опис backend-реалізації
+9. Опис frontend-реалізації
+10. Проєктування та використання бази даних
+11. Опис обчислювального модуля
+12. Реалізація черги задач і моніторингу прогресу
+13. Docker-розгортання та багатосервісна інфраструктура
+14. Тестування і практична перевірка роботи системи
+15. Переваги та обмеження реалізованої системи
+16. Висновки
 
-Requirements:
+## Інструкції для ChatGPT, який буде писати повний текст
 
-- do not write too briefly
-- explain each section in full paragraphs
-- add transitions between sections
-- include technical details, but keep them readable
-- do not invent technologies that are not used in the project
-- do not switch to Russian or English except for technology names
-- keep terminology consistent throughout the text
+Пиши українською мовою в офіційно-науковому стилі.
 
-## Optional Extra Instruction
+Вимоги:
 
-If needed, also generate:
+- не пиши надто коротко
+- кожен розділ розкривай у вигляді повних абзаців
+- додавай переходи між розділами
+- використовуй технічні деталі, але пояснюй їх зрозуміло
+- не вигадуй технології, яких немає в проєкті
+- не переходь на російську мову
+- англійські назви використовуй лише для назв технологій, бібліотек і протоколів
+- дотримуйся єдиної термінології в усьому документі
 
-- abstract
-- conclusions
-- list of keywords
-- presentation theses for defense
-- short annotation for the coursework
+## Додатково, якщо потрібно
+
+Окремо можна також згенерувати:
+
+- анотацію
+- перелік ключових слів
+- тези для захисту
+- короткий опис практичної цінності роботи
+- стислий висновок
 
