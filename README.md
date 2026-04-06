@@ -2,30 +2,30 @@
 
 # HeatFlow Solver
 
-Web application for heat conduction simulation with asynchronous task execution, real-time progress tracking, PostgreSQL persistence, and Docker-based deployment.
+Вебзастосунок для моделювання задач теплопровідності з асинхронним виконанням обчислень, відстеженням прогресу в реальному часі, збереженням даних у PostgreSQL та Docker-розгортанням.
 
 ![Python](https://img.shields.io/badge/Python-3.x-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?style=for-the-badge&logo=fastapi&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-База_даних-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![NGINX](https://img.shields.io/badge/NGINX-Reverse_Proxy-009639?style=for-the-badge&logo=nginx&logoColor=white)
 
 </div>
 
-## Overview
+## Огляд
 
-`HeatFlow Solver` is a coursework project that combines a browser-based interface, a FastAPI backend, a PostgreSQL database, and containerized infrastructure for running computational heat-transfer tasks.
+`HeatFlow Solver` — це курсова робота у форматі вебпроєкту, яка поєднує браузерний інтерфейс, FastAPI-бекенд, PostgreSQL і контейнеризовану інфраструктуру для запуску обчислювальних задач, пов’язаних із моделюванням теплопровідності.
 
-The system supports:
+Система підтримує:
 
-- user registration and login
-- task creation with configurable parameters
-- real-time progress updates through WebSocket
-- task history persistence in PostgreSQL
-- profile and leaderboard pages
-- multi-service deployment with `NGINX + 2 API instances + PostgreSQL`
+- реєстрацію та вхід користувачів
+- створення задач із параметрами
+- відображення прогресу через WebSocket
+- збереження історії задач у PostgreSQL
+- сторінку профілю та сторінку рейтингу
+- багатосервісне розгортання через `NGINX + 2 API-сервери + PostgreSQL`
 
-## Tech Stack
+## Технології
 
 - `Python`
 - `FastAPI`
@@ -39,65 +39,65 @@ The system supports:
 - `Docker Compose`
 - `NGINX`
 
-## Architecture
+## Архітектура
 
-The application is built as a small distributed web system:
+Застосунок побудований як невелика розподілена вебсистема:
 
 ```text
-Browser
+Браузер
    -> NGINX
       -> api1
       -> api2
           -> PostgreSQL
 ```
 
-### Components
+### Основні компоненти
 
-- `frontend` — browser UI for authentication, task creation, monitoring, and profile pages
-- `backend` — API routes, authentication, task orchestration, and database integration
-- `postgres` — persistent storage for users, tokens, active tasks, queue state, and task history
-- `nginx` — reverse proxy and load balancer for incoming traffic
+- `frontend` — клієнтський інтерфейс для входу, створення задач, моніторингу, профілю та рейтингу
+- `backend` — API-маршрути, автентифікація, керування задачами та інтеграція з базою даних
+- `postgres` — постійне збереження користувачів, токенів, активних задач, черги та історії
+- `nginx` — reverse proxy і балансувальник навантаження
 
-## Key Features
+## Основні можливості
 
-- asynchronous execution of computational tasks
-- live task progress updates
-- persistent task history
-- pause, resume, and cancel task controls
-- multiple API instances behind a load balancer
-- Docker-based local deployment
+- асинхронне виконання обчислювальних задач
+- відображення прогресу виконання в реальному часі
+- збереження історії запусків
+- керування задачами: пауза, відновлення, скасування
+- робота з кількома API-екземплярами через балансувальник
+- локальне розгортання через Docker
 
-## Quick Start
+## Швидкий старт
 
-### Docker Deployment
+### Docker-розгортання
 
-Primary way to run the project:
+Основний спосіб запуску проєкту:
 
 ```bash
 docker-compose up -d --build
 ```
 
-Application URL:
+Після запуску застосунок доступний за адресою:
 
 ```text
 http://localhost:8080
 ```
 
-Check running services:
+Перевірка стану контейнерів:
 
 ```bash
 docker-compose ps
 ```
 
-Stop the stack:
+Зупинка:
 
 ```bash
 docker-compose down
 ```
 
-### Local Backend Run
+### Локальний запуск бекенду
 
-If you want to run the backend outside the full Docker stack:
+Якщо потрібно запустити бекенд без повного Docker-стеку:
 
 ```bash
 docker start heatflow_postgres
@@ -105,27 +105,27 @@ source venv/bin/activate
 uvicorn backend.server:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Application URL:
+Адреса:
 
 ```text
 http://localhost:8000
 ```
 
-## Docker Services
+## Docker-сервіси
 
-Defined in `docker-compose.yml`:
+У `docker-compose.yml` описані:
 
 - `postgres` — `PostgreSQL 15`
-- `api1` — first FastAPI instance
-- `api2` — second FastAPI instance
-- `nginx` — public entry point on port `8080`
+- `api1` — перший екземпляр FastAPI
+- `api2` — другий екземпляр FastAPI
+- `nginx` — вхідна точка на порті `8080`
 
-### Exposed Ports
+### Порти
 
-- `8080` -> web application through `nginx`
-- `5433` -> local PostgreSQL access
+- `8080` -> вебзастосунок через `nginx`
+- `5433` -> локальний доступ до `PostgreSQL`
 
-## Project Structure
+## Структура проєкту
 
 ```text
 heatflow-solver/
@@ -153,25 +153,25 @@ heatflow-solver/
 └── README.md
 ```
 
-## Main Pages
+## Основні сторінки
 
-- `/` — login page
-- `/app` — task creation and monitoring
-- `/profile` — user profile and task history
-- `/leaderboard` — leaderboard page
+- `/` — сторінка входу
+- `/app` — головна сторінка створення задач і моніторингу
+- `/profile` — профіль користувача та історія задач
+- `/leaderboard` — сторінка рейтингу
 
-## Database Usage
+## Використання бази даних
 
-PostgreSQL stores:
+PostgreSQL зберігає:
 
-- user accounts
-- authentication tokens
-- active tasks
-- queued tasks
-- completed task history
-- computation results
+- облікові записи користувачів
+- токени автентифікації
+- активні задачі
+- задачі в черзі
+- історію завершених задач
+- результати обчислень
 
-Example query:
+Приклад запиту:
 
 ```bash
 docker exec heatflow_postgres psql -U heatflow -d heatflow_db -c "
@@ -181,16 +181,16 @@ ORDER BY created_at DESC;
 "
 ```
 
-## Coursework Context
+## Контекст курсової роботи
 
-This repository was created as a coursework project focused on:
+Репозиторій створений як курсова робота з фокусом на:
 
-- web application development
-- integration of a computational module into a web interface
-- database-backed task lifecycle management
-- asynchronous communication
-- containerized deployment
+- розробку вебзастосунку
+- інтеграцію обчислювального модуля у вебінтерфейс
+- керування життєвим циклом задач через базу даних
+- асинхронну взаємодію між клієнтом і сервером
+- контейнеризоване розгортання
 
-## License
+## Ліцензія
 
-This repository includes a `LICENSE` file in the project root.
+У корені проєкту присутній файл `LICENSE`.
