@@ -59,6 +59,23 @@ def ensure_user_profile_columns() -> None:
         logger.error(f"Error ensuring user profile columns: {e}")
 
 
+def ensure_task_model_columns() -> None:
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("ALTER TABLE task_queue ADD COLUMN IF NOT EXISTS stage TEXT")
+        cursor.execute("ALTER TABLE task_queue ADD COLUMN IF NOT EXISTS progress FLOAT DEFAULT 0")
+        cursor.execute("ALTER TABLE task_queue ADD COLUMN IF NOT EXISTS result_data JSONB")
+        cursor.execute("ALTER TABLE task_queue ADD COLUMN IF NOT EXISTS simulation_parameters JSONB")
+        cursor.execute("ALTER TABLE task_queue ADD COLUMN IF NOT EXISTS queued_at TIMESTAMP")
+        cursor.execute("ALTER TABLE task_history ADD COLUMN IF NOT EXISTS simulation_parameters JSONB")
+        conn.commit()
+        cursor.close()
+        conn.close()
+    except Exception as e:
+        logger.error(f"Error ensuring task model columns: {e}")
+
+
 def create_user(
     username: str,
     password_hash: str,
@@ -457,7 +474,8 @@ def add_task_to_history(
     iterations: int,
     computation_time: float,
     final_avg_temp: float,
-    result_data: dict = None
+    result_data: dict = None,
+    simulation_parameters: dict = None
 ) -> bool:
  
     try:
@@ -475,14 +493,15 @@ def add_task_to_history(
         
         import json
         result_json = json.dumps(result_data) if result_data else None
+        parameters_json = json.dumps(simulation_parameters) if simulation_parameters else None
         
         cursor.execute(
             """
             INSERT INTO task_history 
-            (task_id, user_id, nodes, iterations, computation_time, final_avg_temp, result_data)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            (task_id, user_id, nodes, iterations, simulation_parameters, computation_time, final_avg_temp, result_data)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """,
-            (task_id, user_id, nodes, iterations, computation_time, final_avg_temp, result_json)
+            (task_id, user_id, nodes, iterations, parameters_json, computation_time, final_avg_temp, result_json)
         )
         
         conn.commit()
@@ -509,6 +528,7 @@ def get_user_history(username: str, limit: int = 50) -> List[Dict]:
                 th.task_id,
                 th.nodes,
                 th.iterations,
+                th.simulation_parameters,
                 th.computation_time,
                 th.final_avg_temp,
                 th.result_data,
@@ -533,6 +553,7 @@ def get_user_history(username: str, limit: int = 50) -> List[Dict]:
                 'task_id': row['task_id'],
                 'nodes': row['nodes'],
                 'iterations': row['iterations'],
+                'simulation_parameters': row['simulation_parameters'] if row['simulation_parameters'] else {},
                 'computation_time': row['computation_time'],
                 'final_avg_temp': row['final_avg_temp'],
                 'result_data': result_data,

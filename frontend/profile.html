@@ -3,202 +3,227 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Profile — HeatFlow Solver</title>
+  <title>Профіль — HeatFlow Solver</title>
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
-  <header class="app-header" style="width:100%;max-width:980px;margin:18px auto 0;">
+  <header class="app-header profile-page-header">
     <div class="profile-header-brand">
-      <div class="profile-header-kicker">Heat simulation workspace</div>
+      <div class="profile-header-kicker">Робочий простір моделювання</div>
       <h1 style="font-size:1.6rem;margin:0;color:var(--accent-2);">HeatFlow Solver</h1>
     </div>
     <div id="userHeader" class="profile-header-user">
       <span id="profileHeaderAvatar" class="mini-avatar">U</span>
-      <span>User: <span id="p-username-header">User</span></span>
+      <span>Користувач: <span id="p-username-header">користувач</span></span>
     </div>
   </header>
 
   <main class="profile-container">
-    <section class="profile-card">
+    <section class="profile-card profile-card-fullscreen">
       <div class="profile-hero">
         <div id="profileAvatarHero" class="profile-avatar-large">U</div>
         <div>
-          <div class="profile-eyebrow">Profile overview</div>
-          <h1 id="p-username">User</h1>
-          <p id="p-name-display" class="profile-real-name">Name not set yet</p>
+          <div class="profile-eyebrow">Огляд профілю</div>
+          <h1 id="p-username">користувач</h1>
+          <p id="p-name-display" class="profile-real-name">Ім'я ще не вказано</p>
           <p id="p-nickname-display" class="profile-handle">No active nickname yet</p>
           <p class="profile-lead">Переглядай історію запусків, швидко витягуй summary по сесіях і повертайся до задач без зайвих переходів.</p>
         </div>
-        <a href="/app" class="btn btn-ghost profile-back-link">Back to App</a>
+        <a href="/app" class="btn btn-ghost profile-back-link">До застосунку</a>
       </div>
 
       <div class="profile-summary-grid">
         <div class="profile-summary-card">
           <span class="summary-label">Registered</span>
-          <strong id="p-created">N/A</strong>
+          <strong id="p-created">немає</strong>
         </div>
         <div class="profile-summary-card">
-          <span class="summary-label">Sessions</span>
+          <span class="summary-label">Запуски</span>
           <strong id="profile-session-count">0</strong>
         </div>
         <div class="profile-summary-card">
-          <span class="summary-label">Best Temperature</span>
-          <strong id="profile-best-temp">N/A</strong>
+          <span class="summary-label">Найкраща температура</span>
+          <strong id="profile-best-temp">немає</strong>
         </div>
       </div>
 
-      <section class="profile-account-editor">
-        <div class="profile-account-head">
-          <div>
-            <h2>Account Details</h2>
-            <p>Редагуй дані профілю, вони зберігаються автоматично та одразу оновлюються в базі даних.</p>
-          </div>
-          <button id="saveProfileBtn" class="btn btn-primary" type="button">Save now</button>
+      <div class="profile-content-grid profile-content-grid-fullscreen">
+        <div class="profile-main-column">
+          <section class="profile-account-editor">
+            <div class="profile-account-head">
+              <div>
+                <h2>Дані акаунта</h2>
+                <p>Редагуй дані профілю, вони зберігаються автоматично та одразу оновлюються в базі даних.</p>
+              </div>
+              <button id="saveProfileBtn" class="btn btn-primary" type="button">Зберегти</button>
+            </div>
+
+            <div class="profile-form-grid profile-account-grid">
+              <label class="field">
+                <span>Ім'я користувача</span>
+                <small class="field-help">Публічне ім'я в застосунку та рейтингу.</small>
+                <input id="account-username" type="text" readonly />
+              </label>
+
+              <label class="field">
+                <span>Ім'я</span>
+                <small class="field-help">Real name of the person who created the account.</small>
+                <input id="account-name" type="text" placeholder="Ваше ім'я" />
+              </label>
+
+              <label class="field">
+                <span>Електронна пошта</span>
+                <input id="account-email" type="email" placeholder="user@example.com" />
+              </label>
+
+              <label class="field">
+                <span>Місто</span>
+                <input id="account-city" type="text" placeholder="Київ" />
+              </label>
+
+              <label class="field profile-span-2">
+                <span>Адреса</span>
+                <input id="account-address" type="text" placeholder="Вулиця, будинок, квартира" />
+              </label>
+
+              <label class="field">
+                <span>Телефон</span>
+                <input id="account-phone" type="tel" placeholder="+380..." />
+              </label>
+
+              <label class="field profile-photo-field">
+                <span>Фото профілю</span>
+                <small class="field-help">Відображається у профілі та шапці застосунку.</small>
+                <div class="avatar-upload-row">
+                  <div id="account-avatar-preview" class="avatar-preview">U</div>
+                  <div class="avatar-upload-actions">
+                    <input id="account-avatar-file" type="file" accept="image/*" />
+                    <button id="removeAvatarBtn" class="btn btn-ghost profile-inline-btn" type="button">Видалити фото</button>
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            <div class="profile-account-footer">
+              <p id="profile-save-status" class="note" aria-live="polite">Профіль завантажено.</p>
+              <p class="profile-password-row">Пароль: <span id="p-password">••••••••</span> <button id="showPwd" class="btn btn-ghost profile-inline-btn">Пояснити</button></p>
+            </div>
+          </section>
         </div>
 
-        <div class="profile-form-grid">
-          <label class="field">
-            <span>Username</span>
-            <small class="field-help">Public display name across the app and leaderboard.</small>
-            <input id="account-username" type="text" readonly />
-          </label>
-
-          <label class="field">
-            <span>Name</span>
-            <small class="field-help">Real name of the person who created the account.</small>
-            <input id="account-name" type="text" placeholder="Your real name" />
-          </label>
-
-          <label class="field profile-span-2">
-            <span>Profile photo</span>
-            <small class="field-help">Visible in the profile and app header.</small>
-            <div class="avatar-upload-row">
-              <div id="account-avatar-preview" class="avatar-preview">U</div>
-              <div class="avatar-upload-actions">
-                <input id="account-avatar-file" type="file" accept="image/*" />
-                <button id="removeAvatarBtn" class="btn btn-ghost profile-inline-btn" type="button">Remove photo</button>
+        <aside class="profile-side-column">
+          <section class="profile-nickname-editor profile-compact-panel">
+            <div class="profile-account-head">
+              <div>
+                <h2>Резервування псевдоніма</h2>
+                <p>Псевдонім працює як окремий унікальний @handle, який можна зарезервувати і потім активувати.</p>
               </div>
             </div>
-          </label>
 
-          <label class="field">
-            <span>Email</span>
-            <input id="account-email" type="email" placeholder="you@example.com" />
-          </label>
+            <div class="profile-nickname-grid profile-compact-stats">
+              <div class="profile-nickname-card">
+                <span class="summary-label">Активний псевдонім</span>
+                <strong id="nickname-current">Ще не активовано</strong>
+              </div>
+              <div class="profile-nickname-card">
+                <span class="summary-label">Зарезервований псевдонім</span>
+                <strong id="nickname-pending">Нічого не зарезервовано</strong>
+              </div>
+            </div>
 
-          <label class="field profile-span-2">
-            <span>Address</span>
-            <input id="account-address" type="text" placeholder="Street, house, apartment" />
-          </label>
+            <div class="profile-form-grid profile-single-field-grid">
+              <label class="field profile-span-2">
+                <span>Бажаний псевдонім</span>
+                <input id="nickname-input" type="text" placeholder="3-20 літер, цифр або символів підкреслення" />
+              </label>
+            </div>
 
-          <label class="field">
-            <span>City</span>
-            <input id="account-city" type="text" placeholder="Kyiv" />
-          </label>
+            <div class="profile-actions profile-action-cluster profile-nickname-actions">
+              <button id="nicknameCheckBtn" class="btn btn-secondary profile-action-btn" type="button">Перевірити</button>
+              <button id="nicknameReserveBtn" class="btn btn-accent-alt profile-action-btn" type="button">Зарезервувати</button>
+              <button id="nicknameActivateBtn" class="btn btn-primary profile-action-btn" type="button">Активувати</button>
+            </div>
+            <p id="nickname-status" class="note" aria-live="polite">Вкажіть псевдонім, щоб почати.</p>
+          </section>
 
-          <label class="field">
-            <span>Phone</span>
-            <input id="account-phone" type="tel" placeholder="+380..." />
-          </label>
-        </div>
+          <section class="profile-username-editor profile-compact-panel">
+            <div class="profile-account-head">
+              <div>
+                <h2>Зміна імені користувача</h2>
+                <p>Окремий захищений flow: перевірка, резерв на 15 хвилин, підтвердження пароля й активація.</p>
+              </div>
+            </div>
 
-        <p id="profile-save-status" class="note" aria-live="polite">Profile loaded.</p>
-      </section>
+            <div class="profile-nickname-grid profile-compact-stats">
+              <div class="profile-nickname-card">
+                <span class="summary-label">Поточне ім'я</span>
+                <strong id="username-current">current_user</strong>
+              </div>
+              <div class="profile-nickname-card">
+                <span class="summary-label">Зарезервоване ім'я</span>
+                <strong id="username-pending">Нічого не зарезервовано</strong>
+              </div>
+            </div>
 
-      <section class="profile-nickname-editor">
-        <div class="profile-account-head">
-          <div>
-            <h2>Nickname Reservation</h2>
-            <p>`Nickname` працює як Telegram handle: це окремий унікальний `@handle`, який можна зарезервувати і потім активувати.</p>
-          </div>
-        </div>
+            <div class="profile-form-grid profile-single-field-grid">
+              <label class="field">
+                <span>Нове ім'я користувача</span>
+                <input id="username-change-input" type="text" placeholder="Починається з літери, 4-24 символи" />
+              </label>
+              <label class="field">
+                <span>Поточний пароль</span>
+                <input id="username-change-password" type="password" placeholder="Підтвердьте поточним паролем" />
+              </label>
+            </div>
 
-        <div class="profile-nickname-grid">
-          <div class="profile-nickname-card">
-            <span class="summary-label">Active nickname</span>
-            <strong id="nickname-current">Not active yet</strong>
-          </div>
-          <div class="profile-nickname-card">
-            <span class="summary-label">Reserved nickname</span>
-            <strong id="nickname-pending">Nothing reserved</strong>
-          </div>
-        </div>
+            <div class="profile-actions profile-action-cluster profile-nickname-actions">
+              <button id="usernameCheckBtn" class="btn btn-secondary profile-action-btn" type="button">Перевірити</button>
+              <button id="usernameReserveBtn" class="btn btn-accent-alt profile-action-btn" type="button">Зарезервувати</button>
+              <button id="usernameActivateBtn" class="btn btn-primary profile-action-btn" type="button">Активувати</button>
+            </div>
+            <p id="username-status" class="note" aria-live="polite">Ім'я користувача змінюється лише через захищену процедуру.</p>
+          </section>
 
-        <div class="profile-form-grid">
-          <label class="field profile-span-2">
-            <span>Desired nickname</span>
-            <input id="nickname-input" type="text" placeholder="Use 3-20 letters, numbers or underscore" />
-          </label>
-        </div>
-
-        <div class="profile-actions profile-nickname-actions">
-          <button id="nicknameCheckBtn" class="btn btn-secondary profile-action-btn" type="button">Check</button>
-          <button id="nicknameReserveBtn" class="btn btn-accent-alt profile-action-btn" type="button">Reserve</button>
-          <button id="nicknameActivateBtn" class="btn btn-primary profile-action-btn" type="button">Activate</button>
-        </div>
-        <p id="nickname-status" class="note" aria-live="polite">Choose a nickname to start.</p>
-      </section>
-
-      <section class="profile-username-editor">
-        <div class="profile-account-head">
-          <div>
-            <h2>Username Change Procedure</h2>
-            <p>Це окрема захищена процедура: перевірка нового username, резерв на 15 хвилин, повторне підтвердження пароля і лише тоді активація.</p>
-          </div>
-        </div>
-
-        <div class="profile-nickname-grid">
-          <div class="profile-nickname-card">
-            <span class="summary-label">Current username</span>
-            <strong id="username-current">current_user</strong>
-          </div>
-          <div class="profile-nickname-card">
-            <span class="summary-label">Reserved username</span>
-            <strong id="username-pending">Nothing reserved</strong>
-          </div>
-        </div>
-
-        <div class="profile-form-grid">
-          <label class="field">
-            <span>New username</span>
-            <input id="username-change-input" type="text" placeholder="Start with a letter, 4-24 chars" />
-          </label>
-          <label class="field">
-            <span>Current password</span>
-            <input id="username-change-password" type="password" placeholder="Confirm with current password" />
-          </label>
-        </div>
-
-        <div class="profile-actions profile-nickname-actions">
-          <button id="usernameCheckBtn" class="btn btn-secondary profile-action-btn" type="button">Check</button>
-          <button id="usernameReserveBtn" class="btn btn-accent-alt profile-action-btn" type="button">Reserve</button>
-          <button id="usernameActivateBtn" class="btn btn-primary profile-action-btn" type="button">Activate</button>
-        </div>
-        <p id="username-status" class="note" aria-live="polite">Username can be changed only through this protected flow.</p>
-      </section>
-
-      <p class="profile-password-row">Password: <span id="p-password">••••••••</span> <button id="showPwd" class="btn btn-ghost profile-inline-btn">Show</button></p>
-      <hr />
-      <div class="profile-actions">
-        <button id="exportSessionsBtn" class="btn btn-secondary profile-action-btn" type="button">Export JSON</button>
-        <button id="sortHotBtn" class="btn btn-accent-alt profile-action-btn" type="button">Hottest First</button>
-        <button id="bestSessionBtn" class="btn btn-primary profile-action-btn" type="button">Best Session</button>
-        <button id="randomSessionBtn" class="btn btn-secondary profile-action-btn" type="button">Open Random</button>
-        <button id="copySummaryBtn" class="btn btn-accent-alt profile-action-btn" type="button">Copy Summary</button>
-        <button id="resetSessionsBtn" class="btn btn-ghost profile-action-btn profile-action-reset" type="button">Reset List</button>
+          <section class="profile-sessions-panel">
+            <div class="profile-account-head">
+              <div>
+                <h2>Ваші запуски</h2>
+                <p>Швидкі дії та історія запусків у компактній боковій панелі.</p>
+              </div>
+            </div>
+            <div class="profile-actions profile-tools-grid">
+              <button id="exportSessionsBtn" class="btn btn-secondary profile-action-btn" type="button">Експорт JSON</button>
+              <button id="sortHotBtn" class="btn btn-accent-alt profile-action-btn" type="button">Найгарячіші спершу</button>
+              <button id="bestSessionBtn" class="btn btn-primary profile-action-btn" type="button">Найкращий запуск</button>
+              <button id="randomSessionBtn" class="btn btn-secondary profile-action-btn" type="button">Випадковий запуск</button>
+              <button id="copySummaryBtn" class="btn btn-accent-alt profile-action-btn" type="button">Копіювати підсумок</button>
+              <button id="resetSessionsBtn" class="btn btn-ghost profile-action-btn" type="button">Скинути список</button>
+            </div>
+            <p id="profile-tools-status" class="note" aria-live="polite"></p>
+            <div id="sessions" class="sessions-list profile-sessions-list">Завантаження...</div>
+          </section>
+        </aside>
       </div>
-      <p id="profile-tools-status" class="note" aria-live="polite"></p>
-      <h2>Your Sessions</h2>
-      <div id="sessions" class="sessions-list">Loading...</div>
-      <div id="session-detail" style="display:none;margin-top:16px;">
-        <h3>Session <span id="sd-taskid"></span></h3>
-        <p>Status: <span id="sd-status"></span></p>
-        <p>Duration: <span id="sd-duration"></span> sec</p>
-        <div>
-          <canvas id="tempChart" width="800" height="280" style="background:#fff;border-radius:8px"></canvas>
-        </div>
-        <div style="margin-top:12px;">
-          <canvas id="cpuChart" width="800" height="160" style="background:#fff;border-radius:8px"></canvas>
+
+      <div id="session-detail" class="session-detail-modal" style="display:none;">
+        <div class="session-detail-panel">
+          <div class="session-detail-head">
+            <div>
+              <div class="profile-eyebrow">Деталі запуску</div>
+              <h3>Запуск <span id="sd-taskid"></span></h3>
+            </div>
+            <button id="closeSessionDetail" class="btn btn-ghost profile-inline-btn" type="button">Закрити</button>
+          </div>
+          <div class="session-detail-meta">
+            <p>Статус: <span id="sd-status"></span></p>
+            <p>Тривалість: <span id="sd-duration"></span> с</p>
+          </div>
+          <div>
+            <canvas id="tempChart" width="800" height="280" style="background:#fff;border-radius:8px"></canvas>
+          </div>
+          <div style="margin-top:12px;">
+            <canvas id="cpuChart" width="800" height="160" style="background:#fff;border-radius:8px"></canvas>
+          </div>
         </div>
       </div>
     </section>
@@ -210,7 +235,7 @@
       const token = sessionStorage.getItem('hf_token') || localStorage.getItem('hf_token');
       if (!token) { window.location.href = '/'; return; }
       const resp = await fetch('/api/account/profile', {headers:{'Authorization':'Bearer '+token}});
-      if (!resp.ok) { document.getElementById('sessions').textContent='Failed to load profile'; return; }
+      if (!resp.ok) { document.getElementById('sessions').textContent='Не вдалося завантажити профіль'; return; }
       const profile = await resp.json();
       document.getElementById('p-username').textContent = profile.username;
       document.getElementById('p-username-header').textContent = profile.username;
@@ -218,6 +243,8 @@
       const nameDisplay = document.getElementById('p-name-display');
       const profileAvatarHero = document.getElementById('profileAvatarHero');
       const profileHeaderAvatar = document.getElementById('profileHeaderAvatar');
+      const sessionDetailModal = document.getElementById('session-detail');
+      const closeSessionDetailBtn = document.getElementById('closeSessionDetail');
       const createdDate = typeof profile.created_at === 'number' 
         ? new Date(profile.created_at * 1000) 
         : new Date(profile.created_at);
@@ -261,7 +288,7 @@
         if (!target) return;
         if (avatarUrl) {
           target.classList.add('has-image');
-          target.innerHTML = `<img src="${avatarUrl}" alt="Profile photo" />`;
+          target.innerHTML = `<img src="${avatarUrl}" alt="Фото профілю" />`;
           return;
         }
         target.classList.remove('has-image');
@@ -303,7 +330,7 @@
         accountFields.address.value = data.address || '';
         accountFields.city.value = data.city || '';
         accountFields.phone.value = data.phone || '';
-        nameDisplay.textContent = data.name ? `Name: ${data.name}` : 'Name not set yet';
+        nameDisplay.textContent = data.name ? `Ім'я: ${data.name}` : "Ім'я ще не вказано";
         syncAvatar(data);
       }
 
@@ -315,8 +342,8 @@
       }
 
       function fillNicknameSection(data) {
-        nicknameCurrent.textContent = data.nickname ? `@${data.nickname}` : 'Not active yet';
-        nicknameDisplay.textContent = data.nickname ? `Nickname: @${data.nickname}` : 'No nickname set yet';
+        nicknameCurrent.textContent = data.nickname ? `@${data.nickname}` : 'Ще не активовано';
+        nicknameDisplay.textContent = data.nickname ? `Псевдонім: @${data.nickname}` : 'Псевдонім ще не вказано';
         if (data.pending_nickname) {
           const expires = formatReservationTime(data.nickname_reserved_until);
           nicknamePending.textContent = expires
@@ -324,13 +351,13 @@
             : `@${data.pending_nickname}`;
           nicknameInput.value = data.pending_nickname;
         } else {
-          nicknamePending.textContent = 'Nothing reserved';
+          nicknamePending.textContent = 'Нічого не зарезервовано';
           nicknameInput.value = '';
         }
       }
 
       function fillUsernameSection(data) {
-        usernameCurrent.textContent = data.username || 'current_user';
+        usernameCurrent.textContent = data.username || 'поточний_користувач';
         if (data.pending_username) {
           const expires = formatReservationTime(data.username_reserved_until);
           usernamePending.textContent = expires
@@ -338,7 +365,7 @@
             : data.pending_username;
           usernameChangeInput.value = data.pending_username;
         } else {
-          usernamePending.textContent = 'Nothing reserved';
+          usernamePending.textContent = 'Нічого не зарезервовано';
         }
       }
 
@@ -361,13 +388,13 @@
         const snapshot = JSON.stringify(payload);
         if (snapshot === lastSavedSnapshot) {
           if (source === 'manual') {
-            setSaveStatus('Nothing changed yet.', 'idle');
+            setSaveStatus('Змін поки немає.', 'idle');
           }
           return;
         }
 
         const requestId = ++saveRequestId;
-        setSaveStatus(source === 'manual' ? 'Saving profile...' : 'Saving changes...', 'saving');
+        setSaveStatus(source === 'manual' ? 'Збереження профілю...' : 'Збереження змін...', 'saving');
 
         try {
           const saveResp = await fetch('/api/account/profile', {
@@ -380,18 +407,18 @@
           });
 
           if (!saveResp.ok) {
-            const json = await saveResp.json().catch(() => ({ detail: 'Save failed' }));
-            throw new Error(json.detail || 'Save failed');
+            const json = await saveResp.json().catch(() => ({ detail: 'Не вдалося зберегти' }));
+            throw new Error(json.detail || 'Не вдалося зберегти');
           }
 
           const updatedProfile = await saveResp.json();
           if (requestId !== saveRequestId) return;
           fillProfileForm(updatedProfile);
           lastSavedSnapshot = JSON.stringify(profilePayload());
-          setSaveStatus('Profile saved to database.', 'success');
+          setSaveStatus('Профіль збережено в базі даних.', 'success');
         } catch (error) {
           if (requestId !== saveRequestId) return;
-          setSaveStatus(error.message || 'Could not save profile.', 'error');
+          setSaveStatus(error.message || 'Не вдалося зберегти профіль.', 'error');
         }
       }
 
@@ -404,7 +431,7 @@
         Object.values(accountFields).forEach(field => {
           if (field === accountFields.username) return;
           field.addEventListener(eventName, () => {
-            setSaveStatus('Changes detected. Saving soon...', 'saving');
+            setSaveStatus('Зміни виявлено. Скоро збережу...', 'saving');
             clearTimeout(saveTimer);
             saveTimer = setTimeout(() => persistProfile('auto'), 450);
           });
@@ -420,18 +447,18 @@
         const file = avatarInput.files && avatarInput.files[0];
         if (!file) return;
         if (!file.type.startsWith('image/')) {
-          setSaveStatus('Choose an image file for the profile photo.', 'error');
+          setSaveStatus('Виберіть файл зображення для фото профілю.', 'error');
           avatarInput.value = '';
           return;
         }
         try {
           currentAvatarUrl = await fileToDataUrl(file);
           syncAvatar(profile);
-          setSaveStatus('Photo selected. Saving soon...', 'saving');
+          setSaveStatus('Фото вибрано. Скоро збережу...', 'saving');
           clearTimeout(saveTimer);
           saveTimer = setTimeout(() => persistProfile('auto'), 250);
         } catch (error) {
-          setSaveStatus(error.message || 'Could not load image.', 'error');
+          setSaveStatus(error.message || 'Не вдалося завантажити зображення.', 'error');
         }
       });
 
@@ -439,7 +466,7 @@
         currentAvatarUrl = '';
         avatarInput.value = '';
         syncAvatar(profile);
-        setSaveStatus('Photo removed. Saving soon...', 'saving');
+        setSaveStatus('Фото видалено. Скоро збережу...', 'saving');
         clearTimeout(saveTimer);
         saveTimer = setTimeout(() => persistProfile('auto'), 250);
       });
@@ -447,10 +474,10 @@
       nicknameCheckBtn.addEventListener('click', async () => {
         const candidate = nicknameInput.value.trim();
         if (!candidate) {
-          setNicknameStatus('Enter a nickname first.', 'idle');
+          setNicknameStatus('Спочатку введіть псевдонім.', 'idle');
           return;
         }
-        setNicknameStatus('Checking nickname availability...', 'saving');
+        setNicknameStatus('Перевірка доступності псевдоніма...', 'saving');
         try {
           const checkResp = await fetch(`/api/account/nickname/check?value=${encodeURIComponent(candidate)}`, {
             headers: { 'Authorization': 'Bearer ' + token }
@@ -461,17 +488,17 @@
           }
           setNicknameStatus(checkData.reason, checkData.available ? 'success' : 'error');
         } catch (error) {
-          setNicknameStatus(error.message || 'Could not check nickname.', 'error');
+          setNicknameStatus(error.message || 'Не вдалося перевірити псевдонім.', 'error');
         }
       });
 
       nicknameReserveBtn.addEventListener('click', async () => {
         const candidate = nicknameInput.value.trim();
         if (!candidate) {
-          setNicknameStatus('Enter a nickname first.', 'idle');
+          setNicknameStatus('Спочатку введіть псевдонім.', 'idle');
           return;
         }
-        setNicknameStatus('Reserving nickname...', 'saving');
+        setNicknameStatus('Резервування псевдоніма...', 'saving');
         try {
           const reserveResp = await fetch('/api/account/nickname/reserve', {
             method: 'POST',
@@ -486,14 +513,14 @@
             throw new Error(reserveData.detail || 'Could not reserve nickname.');
           }
           fillNicknameSection(reserveData);
-          setNicknameStatus(reserveData.message || 'Nickname reserved.', 'success');
+          setNicknameStatus(reserveData.message || 'Псевдонім зарезервовано.', 'success');
         } catch (error) {
-          setNicknameStatus(error.message || 'Could not reserve nickname.', 'error');
+          setNicknameStatus(error.message || 'Не вдалося зарезервувати псевдонім.', 'error');
         }
       });
 
       nicknameActivateBtn.addEventListener('click', async () => {
-        setNicknameStatus('Activating nickname...', 'saving');
+        setNicknameStatus('Активація псевдоніма...', 'saving');
         try {
           const activateResp = await fetch('/api/account/nickname/activate', {
             method: 'POST',
@@ -504,9 +531,9 @@
             throw new Error(activateData.detail || 'Could not activate nickname.');
           }
           fillNicknameSection(activateData);
-          setNicknameStatus(activateData.message || 'Nickname activated.', 'success');
+          setNicknameStatus(activateData.message || 'Псевдонім активовано.', 'success');
         } catch (error) {
-          setNicknameStatus(error.message || 'Could not activate nickname.', 'error');
+          setNicknameStatus(error.message || 'Не вдалося активувати псевдонім.', 'error');
         }
       });
 
@@ -525,10 +552,10 @@
       usernameCheckBtn.addEventListener('click', async () => {
         const candidate = usernameChangeInput.value.trim();
         if (!candidate) {
-          setUsernameStatus('Enter a new username first.', 'idle');
+          setUsernameStatus("Спочатку введіть нове ім'я користувача.", 'idle');
           return;
         }
-        setUsernameStatus('Checking username availability...', 'saving');
+        setUsernameStatus("Перевірка доступності імені користувача...", 'saving');
         try {
           const checkResp = await fetch(`/api/account/username/check?value=${encodeURIComponent(candidate)}`, {
             headers: { 'Authorization': 'Bearer ' + token }
@@ -537,21 +564,21 @@
           if (!checkResp.ok) throw new Error(data.detail || 'Could not check username.');
           setUsernameStatus(data.reason, data.available ? 'success' : 'error');
         } catch (error) {
-          setUsernameStatus(error.message || 'Could not check username.', 'error');
+          setUsernameStatus(error.message || "Не вдалося перевірити ім'я користувача.", 'error');
         }
       });
 
       usernameReserveBtn.addEventListener('click', async () => {
         const payload = getUsernameChangePayload();
         if (!payload.username) {
-          setUsernameStatus('Enter a new username first.', 'idle');
+          setUsernameStatus("Спочатку введіть нове ім'я користувача.", 'idle');
           return;
         }
         if (!payload.current_password) {
-          setUsernameStatus('Enter your current password to reserve a username.', 'idle');
+          setUsernameStatus("Введіть поточний пароль, щоб зарезервувати ім'я.", 'idle');
           return;
         }
-        setUsernameStatus('Reserving username...', 'saving');
+        setUsernameStatus("Резервування імені користувача...", 'saving');
         try {
           const reserveResp = await fetch('/api/account/username/reserve', {
             method: 'POST',
@@ -564,19 +591,19 @@
           const data = await reserveResp.json();
           if (!reserveResp.ok) throw new Error(data.detail || 'Could not reserve username.');
           fillUsernameSection(data);
-          setUsernameStatus(data.message || 'Username reserved.', 'success');
+          setUsernameStatus(data.message || "Ім'я користувача зарезервовано.", 'success');
         } catch (error) {
-          setUsernameStatus(error.message || 'Could not reserve username.', 'error');
+          setUsernameStatus(error.message || "Не вдалося зарезервувати ім'я користувача.", 'error');
         }
       });
 
       usernameActivateBtn.addEventListener('click', async () => {
         const payload = getUsernameChangePayload();
         if (!payload.current_password) {
-          setUsernameStatus('Enter your current password to activate the reserved username.', 'idle');
+          setUsernameStatus("Введіть поточний пароль, щоб активувати зарезервоване ім'я.", 'idle');
           return;
         }
-        setUsernameStatus('Activating username...', 'saving');
+        setUsernameStatus("Активація імені користувача...", 'saving');
         try {
           const activateResp = await fetch('/api/account/username/activate', {
             method: 'POST',
@@ -596,18 +623,34 @@
           syncAvatar(data);
           fillUsernameSection(data);
           usernameChangePassword.value = '';
-          setUsernameStatus(data.message || 'Username activated.', 'success');
+          setUsernameStatus(data.message || "Ім'я користувача активовано.", 'success');
         } catch (error) {
-          setUsernameStatus(error.message || 'Could not activate username.', 'error');
+          setUsernameStatus(error.message || "Не вдалося активувати ім'я користувача.", 'error');
         }
       });
 
       document.getElementById('showPwd').addEventListener('click', ()=>{
-        alert('For security we store only a hashed password; cannot display the original password.');
+        alert('З міркувань безпеки зберігається лише хеш пароля, тому показати оригінальний пароль неможливо.');
+      });
+
+      function closeSessionDetail() {
+        sessionDetailModal.style.display = 'none';
+      }
+
+      closeSessionDetailBtn.addEventListener('click', closeSessionDetail);
+      sessionDetailModal.addEventListener('click', (event) => {
+        if (event.target === sessionDetailModal) {
+          closeSessionDetail();
+        }
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && sessionDetailModal.style.display !== 'none') {
+          closeSessionDetail();
+        }
       });
 
       const resp2 = await fetch('/api/account/history', {headers:{'Authorization':'Bearer '+token}});
-      if (!resp2.ok) { document.getElementById('sessions').textContent='Failed to load sessions'; return; }
+      if (!resp2.ok) { document.getElementById('sessions').textContent='Не вдалося завантажити запуски'; return; }
       const sessions = await resp2.json();
       const list = document.getElementById('sessions');
       const toolsStatus = document.getElementById('profile-tools-status');
@@ -641,10 +684,10 @@
         if (!sessionItems || sessionItems.length===0) {
           list.innerHTML = `
             <div class="empty-sessions">
-              <div class="empty-sessions-badge">No data yet</div>
-              <h3>No sessions yet</h3>
-              <p>Запусти першу задачу в основному застосунку, і тут з’явиться історія обчислень, температурні графіки та короткі summary.</p>
-              <a href="/app" class="btn btn-primary">Create First Task</a>
+              <div class="empty-sessions-badge">Даних ще немає</div>
+              <h3>Запусків ще немає</h3>
+              <p>Запусти першу задачу в основному застосунку, і тут з'явиться історія обчислень, температурні графіки та короткі підсумки.</p>
+              <a href="/app" class="btn btn-primary">Створити першу задачу</a>
             </div>
           `;
           return;
@@ -655,9 +698,9 @@
         el.className = 'session-item';
         const tempDisplay = s.result && s.result.max_temperature_c !== undefined 
           ? `<strong>${s.result.max_temperature_c.toFixed(2)}°C</strong>` 
-          : 'N/A';
-        const nodesDisplay = s.result && s.result.nodes ? ` | ${s.result.nodes} nodes` : '';
-        el.innerHTML = `<div style="flex:1"><strong>${s.task_id.substring(0, 8)}...</strong> — <em style='color:var(--muted)'>${s.status}</em> — ${tempDisplay}${nodesDisplay}</div> <div><button data-id='${s.task_id}'>View</button></div>`;
+          : 'немає';
+        const nodesDisplay = s.result && (s.result.requested_nodes || s.result.nodes) ? ` | ${s.result.requested_nodes || s.result.nodes} вузлів` : '';
+        el.innerHTML = `<div style="flex:1"><strong>${s.task_id.substring(0, 8)}...</strong> — <em style='color:var(--muted)'>${s.status}</em> — ${tempDisplay}${nodesDisplay}</div> <div><button data-id='${s.task_id}'>Переглянути</button></div>`;
         list.appendChild(el);
         const btn = el.querySelector('button');
         if (btn) { btn.className = 'btn btn-ghost'; btn.style.padding='8px 12px'; }
@@ -673,7 +716,7 @@
       })[0];
       bestTempEl.textContent = bestSession && bestSession.result && bestSession.result.max_temperature_c !== undefined
         ? `${bestSession.result.max_temperature_c.toFixed(2)}°C`
-        : 'N/A';
+        : 'немає';
 
       renderSessions(sessions);
 
@@ -687,7 +730,7 @@
         link.click();
         link.remove();
         URL.revokeObjectURL(url);
-        setToolsStatus('Session history exported as JSON.', exportBtn);
+        setToolsStatus('Історію запусків експортовано у JSON.', exportBtn);
       });
 
       sortHotBtn.addEventListener('click', () => {
@@ -697,12 +740,12 @@
           return bTemp - aTemp;
         });
         renderSessions(sorted);
-        setToolsStatus('Sessions sorted by max temperature.', sortHotBtn);
+        setToolsStatus('Запуски відсортовано за максимальною температурою.', sortHotBtn);
       });
 
       bestSessionBtn.addEventListener('click', () => {
         if (!sessions.length) {
-          setToolsStatus('No sessions available.', bestSessionBtn);
+          setToolsStatus('Немає доступних запусків.', bestSessionBtn);
           return;
         }
         const best = [...sessions].sort((a, b) => {
@@ -711,17 +754,17 @@
           return bTemp - aTemp;
         })[0];
         showSession(best);
-        setToolsStatus(`Opened hottest session: ${best.task_id.substring(0, 8)}...`, bestSessionBtn);
+        setToolsStatus(`Відкрито найгарячіший запуск: ${best.task_id.substring(0, 8)}...`, bestSessionBtn);
       });
 
       randomSessionBtn.addEventListener('click', () => {
         if (!sessions.length) {
-          setToolsStatus('No sessions available.', randomSessionBtn);
+          setToolsStatus('Немає доступних запусків.', randomSessionBtn);
           return;
         }
         const random = sessions[Math.floor(Math.random() * sessions.length)];
         showSession(random);
-        setToolsStatus(`Opened random session: ${random.task_id.substring(0, 8)}...`, randomSessionBtn);
+        setToolsStatus(`Відкрито випадковий запуск: ${random.task_id.substring(0, 8)}...`, randomSessionBtn);
       });
 
       copySummaryBtn.addEventListener('click', async () => {
@@ -732,31 +775,31 @@
           return bTemp - aTemp;
         })[0];
         const summary = [
-          `User: ${profile.username}`,
+          `Користувач: ${profile.username}`,
           `Registered: ${createdDate.toLocaleString()}`,
           `Total sessions: ${sessions.length}`,
           `Completed sessions: ${completed.length}`,
-          hottest ? `Hottest session: ${hottest.task_id} (${(hottest.result && hottest.result.max_temperature_c !== undefined) ? hottest.result.max_temperature_c.toFixed(2) : 'N/A'}°C)` : 'Hottest session: N/A'
+          hottest ? `Найгарячіший запуск: ${hottest.task_id} (${(hottest.result && hottest.result.max_temperature_c !== undefined) ? hottest.result.max_temperature_c.toFixed(2) : 'немає'}°C)` : 'Найгарячіший запуск: немає'
         ].join('\n');
 
         try {
           await navigator.clipboard.writeText(summary);
-          setToolsStatus('Profile summary copied to clipboard.', copySummaryBtn);
+          setToolsStatus('Підсумок профілю скопійовано.', copySummaryBtn);
         } catch (e) {
-          setToolsStatus('Could not copy summary to clipboard.', copySummaryBtn);
+          setToolsStatus('Не вдалося скопіювати підсумок.', copySummaryBtn);
         }
       });
 
       resetBtn.addEventListener('click', () => {
         renderSessions(sessions);
-        setToolsStatus('Session list restored.', resetBtn);
+        setToolsStatus('Список запусків відновлено.', resetBtn);
       });
 
       function showSession(s){
-        document.getElementById('session-detail').style.display = 'block';
+        sessionDetailModal.style.display = 'flex';
         document.getElementById('sd-taskid').textContent = s.task_id;
         document.getElementById('sd-status').textContent = s.status;
-        const dur = (s.end_time && s.start_time) ? (s.end_time - s.start_time).toFixed(2) : (s.result && s.result.execution_time_seconds) || 'N/A';
+        const dur = (s.end_time && s.start_time) ? (s.end_time - s.start_time).toFixed(2) : (s.result && s.result.execution_time_seconds) || 'немає';
         document.getElementById('sd-duration').textContent = dur;
         const ts = (s.result && s.result.time_series) || [];
         if (ts.length===0) { 
@@ -837,7 +880,6 @@
             plugins: { legend:{display:true}, tooltip:{mode:'index',intersect:false} }
           }
         });
-        document.getElementById('session-detail').scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     })();
   </script>

@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="uk">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Leaderboard — HeatFlow Solver</title>
+  <title>Рейтинг — HeatFlow Solver</title>
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
@@ -23,24 +23,24 @@
 
   <header class="app-header" style="width:100%;max-width:1100px;margin:18px auto 0;">
     <div class="profile-header-brand">
-      <div class="profile-header-kicker">Community ranking</div>
-      <h1 style="font-size:1.6rem;margin:0;color:var(--accent-2);">Heat Leaderboard</h1>
+      <div class="profile-header-kicker">Рейтинг користувачів</div>
+      <h1 style="font-size:1.6rem;margin:0;color:var(--accent-2);">HeatFlow Solver</h1>
     </div>
-    <div id="leaderboardUserInfo" class="profile-header-user">User: <span id="leaderboardUsername">User</span></div>
-    <a class="btn btn-secondary" href="/app">Back to App</a>
+    <div id="leaderboardUserInfo" class="profile-header-user">Користувач: <span id="leaderboardUsername">користувач</span></div>
+    <a class="btn btn-secondary" href="/app">До застосунку</a>
   </header>
 
   <main class="leaderboard-page">
     <section class="leaderboard-shell">
       <div class="leaderboard-head">
         <div>
-          <h2>Top HeatFlow Users</h2>
+          <h2>Найкращі результати</h2>
           <p>Рейтинг користувачів за найкращими результатами симуляцій теплового потоку. Чим вища температура і більше вдалих запусків, тим вище позиція.</p>
         </div>
-        <button id="refreshLeaderboardBtn" class="btn btn-ghost" type="button">Refresh</button>
+        <button id="refreshLeaderboardBtn" class="btn btn-ghost" type="button">Оновити</button>
       </div>
 
-      <div id="leaderboardList" class="leaderboard-list">Loading leaderboard...</div>
+      <div id="leaderboardList" class="leaderboard-list">Завантаження рейтингу...</div>
     </section>
   </main>
 
@@ -48,24 +48,24 @@
     (function(){
       const leaderboardList = document.getElementById('leaderboardList');
       const refreshLeaderboardBtn = document.getElementById('refreshLeaderboardBtn');
-      const currentUsername = sessionStorage.getItem('hf_username') || 'unknown';
+      const currentUsername = sessionStorage.getItem('hf_username') || 'користувач';
       document.getElementById('leaderboardUsername').textContent = currentUsername;
 
       async function loadLeaderboard() {
-        leaderboardList.textContent = 'Loading leaderboard...';
+        leaderboardList.textContent = 'Завантаження рейтингу...';
         try {
           const response = await fetch('/api/leaderboard');
           const rows = await response.json();
-          if (!response.ok) throw new Error('Could not load leaderboard');
+          if (!response.ok) throw new Error('Не вдалося завантажити рейтинг');
 
           if (!rows.length) {
-            leaderboardList.innerHTML = `<div class="leaderboard-empty">No completed sessions yet. Run a few simulations to fill the board.</div>`;
+            leaderboardList.innerHTML = `<div class="leaderboard-empty">Поки немає завершених запусків. Запустіть кілька симуляцій, щоб заповнити рейтинг.</div>`;
             return;
           }
 
           leaderboardList.innerHTML = rows.map((row, index) => {
-            const temp = typeof row.best_temperature === 'number' ? `${row.best_temperature.toFixed(2)}°C` : 'N/A';
-            const avgDuration = typeof row.avg_duration === 'number' ? `${row.avg_duration.toFixed(2)}s` : 'N/A';
+            const temp = typeof row.best_temperature === 'number' ? `${row.best_temperature.toFixed(2)} °C` : 'немає';
+            const avgDuration = typeof row.avg_duration === 'number' ? `${row.avg_duration.toFixed(2)} с` : 'немає';
             const cleanNickname = (row.nickname || '').trim();
             const hasSeparateNickname = cleanNickname && cleanNickname.toLowerCase() !== String(row.username || '').trim().toLowerCase();
             const nicknameMeta = hasSeparateNickname ? `@${cleanNickname}` : '';
@@ -77,15 +77,15 @@
                   ${nicknameMeta ? `<span>${nicknameMeta}</span>` : ''}
                 </div>
                 <div class="leaderboard-stats">
-                  <span>Best: ${temp}</span>
-                  <span>Sessions: ${row.sessions_count}</span>
-                  <span>Avg: ${avgDuration}</span>
+                  <span>Найкраще: ${temp}</span>
+                  <span>Запусків: ${row.sessions_count}</span>
+                  <span>Сер. час: ${avgDuration}</span>
                 </div>
               </div>
             `;
           }).join('');
         } catch (error) {
-          leaderboardList.innerHTML = `<div class="leaderboard-empty">Could not load leaderboard.</div>`;
+          leaderboardList.innerHTML = `<div class="leaderboard-empty">Не вдалося завантажити рейтинг.</div>`;
         }
       }
 

@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 
 from .task_manager import TaskManager
-from .database import ensure_user_profile_columns
+from .database import ensure_task_model_columns, ensure_user_profile_columns
 
 
 app = FastAPI(title="HeatFlow Solver Async API")
@@ -23,6 +23,7 @@ app.add_middleware(
 
 app.state.token_map = {}
 ensure_user_profile_columns()
+ensure_task_model_columns()
 
 task_manager = TaskManager()
 

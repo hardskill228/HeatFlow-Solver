@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS task_history (
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     nodes INTEGER NOT NULL,
     iterations INTEGER NOT NULL,
+    simulation_parameters JSONB,
     computation_time FLOAT NOT NULL,
     final_avg_temp FLOAT NOT NULL,
     result_data JSONB,  -- Повний result включаючи time_series
@@ -59,9 +60,14 @@ CREATE TABLE IF NOT EXISTS task_queue (
     username VARCHAR(100) NOT NULL,
     nodes INTEGER NOT NULL,
     iterations INTEGER NOT NULL,
+    simulation_parameters JSONB,
     status VARCHAR(20) DEFAULT 'QUEUED', -- QUEUED, RUNNING, COMPLETED
     worker_id VARCHAR(50), -- api1 або api2
+    stage TEXT,
+    progress FLOAT DEFAULT 0,
+    result_data JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    queued_at TIMESTAMP,
     started_at TIMESTAMP,
     completed_at TIMESTAMP
 );

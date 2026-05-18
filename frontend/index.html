@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="uk">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>HeatFlow Solver — App</title>
+  <title>HeatFlow Solver — моделювання теплопровідності</title>
     <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
@@ -21,90 +21,137 @@
         </script>
 
   <header class="app-header">
-    <h1>HeatFlow Solver</h1>
-    <div id="userInfo" class="app-user-pill">
-      <span id="appHeaderAvatar" class="mini-avatar">U</span>
-      <span id="appHeaderUsername">unknown</span>
+    <div class="app-brand">
+      <span class="app-header-kicker">Чисельне моделювання</span>
+      <h1>HeatFlow Solver</h1>
     </div>
-    <a id="leaderboardBtn" class="btn btn-secondary app-nav-btn" href="/leaderboard">Leaderboard</a>
-    <a id="profileBtn" class="btn btn-secondary" href="/profile">Profile</a>
-    <button id="logoutBtn" class="btn btn-danger app-logout-btn">Logout</button>
+    <nav class="app-header-actions" aria-label="Навігація застосунку">
+      <div id="userInfo" class="app-user-pill">
+        <span id="appHeaderAvatar" class="mini-avatar">U</span>
+        <span id="appHeaderUsername">користувач</span>
+      </div>
+      <a id="repoBtn" class="btn btn-secondary app-nav-btn" href="https://github.com/hardskill228/HeatFlow-Solver" target="_blank" rel="noopener">Репозиторій</a>
+      <a id="leaderboardBtn" class="btn btn-secondary app-nav-btn" href="/leaderboard">Рейтинг</a>
+      <a id="profileBtn" class="btn btn-secondary app-nav-btn" href="/profile">Профіль</a>
+      <button id="logoutBtn" class="btn btn-danger app-logout-btn">Вийти</button>
+    </nav>
   </header>
     
 
-  <main class="app-body">
-        <div class="card p-6 bg-gray-50 rounded-xl mb-8 border border-gray-200">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Налаштування Задачі</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label for="nodes" class="block text-sm font-medium text-gray-700">Кількість Вузлів (Nodes):</label>
-                    <input type="number" id="nodes" value="50000" min="1000" max="100000"
-                           class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-red-500 focus:border-red-500">
-                    <p class="text-xs text-gray-500 mt-1">MAX 100,000 (Вимога №1)</p>
-                </div>
-                <div>
-                    <label for="iterations" class="block text-sm font-medium text-gray-700">Ітерації Симуляції:</label>
-                    <input type="number" id="iterations" value="10000" min="10" max="1000000"
-                           class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-red-500 focus:border-red-500">
-                    <p class="text-xs text-gray-500 mt-1">Визначає час, необхідний для обчислення.</p>
-                </div>
-            </div>
-
-        <button id="startButton" onclick="startTask()"
-            class="btn btn-primary" style="width:100%;padding:14px 18px;font-size:16px;">
-                Запустити Обчислення
-            </button>
-            <p id="message-box" class="text-center mt-3 text-sm font-medium text-red-500"></p>
+  <main class="app-body heat-app-body">
+    <section class="heat-workspace">
+      <div class="card heat-form-card">
+        <div class="heat-card-head">
+          <div>
+            <span class="profile-eyebrow">Постановка задачі</span>
+            <h2>Одновимірне рівняння теплопровідності</h2>
+            <p>Модель: ∂T/∂t = α · ∂²T/∂x², 0 ≤ x ≤ L. Задайте початкову температуру стрижня та сталі температури на лівому й правому краях.</p>
+          </div>
+          <a class="repo-inline-link" href="https://github.com/hardskill228/HeatFlow-Solver" target="_blank" rel="noopener">Код та інструкції запуску</a>
         </div>
 
-        <div class="card p-6 bg-white rounded-xl shadow-inner border border-red-200">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Моніторинг Завдання</h2>
-
-            <div class="space-y-2 text-sm">
-                <p><strong>Task ID:</strong> <span id="task-id" class="font-mono text-xs text-blue-600">N/A</span></p>
-                <p><strong>Status:</strong> <span id="task-status" class="font-bold text-gray-600">IDLE</span></p>
-                <p><strong>Worker:</strong> <span id="task-worker" class="font-semibold text-purple-600">N/A</span></p>
-                <p><strong>Current Stage:</strong> <span id="task-stage" class="text-gray-600">Ready to start</span></p>
-            </div>
-
-            <div class="mt-4">
-                <p class="font-semibold text-gray-700 mb-2">Progress:</p>
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-                    <div id="progress-percent" style="font-weight:700;color:var(--accent-2)">0%</div>
-                    <div id="progress-stage" style="font-size:0.9rem;color:var(--muted)"></div>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-3.5 mb-2 main-progress-track">
-                    <div id="progress-bar" class="bg-blue-500 h-3.5 rounded-full text-xs font-medium text-white text-center p-0.5 leading-none" style="width: 0%"></div>
-                </div>
-            </div>
-            
-            <div id="result-display" class="hidden mt-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
-                <h3 class="font-bold text-blue-800 mb-2">Результат Обчислення:</h3>
-                <p class="text-sm text-blue-700">Максимальна Температура (C): <span id="max-temp" class="font-mono">N/A</span></p>
-                <p class="text-sm text-blue-700">Середня Температура (C): <span id="avg-temp" class="font-mono">N/A</span></p>
-                <p class="text-sm text-blue-700">Час виконання (сек): <span id="exec-time" class="font-mono">N/A</span></p>
-                <img id="result-image" src="https://placehold.co/400x100/f3f4f6/374151?text=Simulation+Result" 
-                     alt="Simulation Result Placeholder" 
-                     class="mt-4 rounded-lg border border-gray-300 mx-auto" style="max-width: 100%;"/>
-            </div>
-
-            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mt-6">
-        <button id="cancelButton" disabled
-            class="btn btn-danger" style="flex:1;padding:10px 12px;">
-                    Скасувати Завдання
-                </button>
-        <button id="pauseResumeButton" disabled class="btn btn-ghost" style="margin-left:12px;padding:10px 12px;">Stop</button>
-
-            </div>
-
-            <p class="text-sm mt-3 text-center">WebSocket Status: <span id="ws-status" class="font-bold text-gray-500">Disconnected</span></p>
+        <div class="model-equation" aria-label="Математична модель">
+          <div><strong>Початкова умова:</strong> T(x, 0) = T₀</div>
+          <div><strong>Крайові умови:</strong> T(0, t) = Tліва, T(L, t) = Tправа</div>
         </div>
-        <div id="tasksContainer"></div>
-        
-        <pre id="history-output" class="hidden mt-8 p-4 bg-gray-800 text-green-300 text-xs rounded-lg overflow-auto max-h-96"></pre>
-        
-    </div>
+
+        <div class="heat-input-grid">
+          <label class="field">
+            <span>Кількість вузлів сітки</span>
+            <small class="field-help">Просторова дискретизація області [0, L]. Максимум: 100000.</small>
+            <input type="number" id="nodes" value="200" min="20" max="100000" step="1">
+          </label>
+          <label class="field">
+            <span>Кількість часових кроків</span>
+            <small class="field-help">Скільки ітерацій виконує явна різницева схема.</small>
+            <input type="number" id="iterations" value="6000" min="10" max="1000000" step="10">
+          </label>
+          <label class="field">
+            <span>Довжина стрижня L, м</span>
+            <small class="field-help">Фізична довжина області моделювання.</small>
+            <input type="number" id="rodLength" value="1" min="0.01" max="1000" step="0.01">
+          </label>
+          <label class="field">
+            <span>Час моделювання, с</span>
+            <small class="field-help">Інтервал часу, який покриває розрахунок.</small>
+            <input type="number" id="totalTime" value="120" min="0.1" max="100000" step="0.1">
+          </label>
+          <label class="field">
+            <span>Коефіцієнт температуропровідності α, м²/с</span>
+            <small class="field-help">Наприклад, для міді близько 0.000115 м²/с.</small>
+            <input type="number" id="thermalDiffusivity" value="0.000115" min="0.000001" max="1" step="0.000001">
+          </label>
+          <label class="field">
+            <span>Початкова температура T₀, °C</span>
+            <small class="field-help">Температура внутрішніх вузлів у момент t = 0.</small>
+            <input type="number" id="initialTemperature" value="20" min="-273.15" max="5000" step="0.1">
+          </label>
+          <label class="field">
+            <span>Ліва крайова температура T(0,t), °C</span>
+            <small class="field-help">Умова Діріхле на лівому кінці стрижня.</small>
+            <input type="number" id="leftBoundary" value="100" min="-273.15" max="5000" step="0.1">
+          </label>
+          <label class="field">
+            <span>Права крайова температура T(L,t), °C</span>
+            <small class="field-help">Умова Діріхле на правому кінці стрижня.</small>
+            <input type="number" id="rightBoundary" value="20" min="-273.15" max="5000" step="0.1">
+          </label>
+        </div>
+
+        <button id="startButton" onclick="startTask()" class="btn btn-primary heat-start-btn">
+          Запустити розрахунок
+        </button>
+        <p id="message-box" class="note heat-message" aria-live="polite"></p>
+      </div>
+
+      <div class="card heat-monitor-card">
+        <div class="heat-card-head">
+          <div>
+            <span class="profile-eyebrow">Моніторинг</span>
+            <h2>Стан обчислення</h2>
+          </div>
+        </div>
+
+        <div class="heat-status-grid text-sm">
+          <p><strong>ID задачі:</strong> <span id="task-id" class="font-mono">немає</span></p>
+          <p><strong>Статус:</strong> <span id="task-status" class="font-bold text-gray-600">Очікує запуску</span></p>
+          <p><strong>Виконавець:</strong> <span id="task-worker" class="font-semibold text-purple-600">не призначено</span></p>
+          <p><strong>Етап:</strong> <span id="task-stage" class="text-gray-600">Готово до старту</span></p>
+        </div>
+
+        <div class="heat-progress-block">
+          <p class="font-semibold text-gray-700 mb-2">Прогрес:</p>
+          <div class="heat-progress-meta">
+            <div id="progress-percent">0%</div>
+            <div id="progress-stage"></div>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-3.5 mb-2 main-progress-track">
+            <div id="progress-bar" class="bg-blue-500 h-3.5 rounded-full text-xs font-medium text-white text-center p-0.5 leading-none" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div id="result-display" class="hidden heat-result-panel">
+          <h3>Результат розрахунку</h3>
+          <div class="heat-result-grid">
+            <p>Максимальна температура: <span id="max-temp" class="font-mono">немає</span> °C</p>
+            <p>Середня температура: <span id="avg-temp" class="font-mono">немає</span> °C</p>
+            <p>Час виконання: <span id="exec-time" class="font-mono">немає</span> с</p>
+            <p>Число Фур'є: <span id="fourier-number" class="font-mono">немає</span></p>
+          </div>
+          <canvas id="result-chart" width="720" height="180" aria-label="Профіль температури вздовж стрижня"></canvas>
+        </div>
+
+        <div class="heat-monitor-actions">
+          <button id="cancelButton" disabled class="btn btn-danger">Скасувати задачу</button>
+          <button id="pauseResumeButton" disabled class="btn btn-ghost">Призупинити</button>
+        </div>
+
+        <p class="text-sm heat-socket-status">Стан WebSocket: <span id="ws-status" class="font-bold text-gray-500">від'єднано</span></p>
+      </div>
+      <div id="tasksContainer"></div>
+      <pre id="history-output" class="hidden mt-8 p-4 bg-gray-800 text-green-300 text-xs rounded-lg overflow-auto max-h-96"></pre>
+    </section>
+  </main>
 
     <script>
 
@@ -133,13 +180,87 @@
             historyOutput: document.getElementById('history-output'),
             nodes: document.getElementById('nodes'),
             iterations: document.getElementById('iterations'),
+            rodLength: document.getElementById('rodLength'),
+            totalTime: document.getElementById('totalTime'),
+            thermalDiffusivity: document.getElementById('thermalDiffusivity'),
+            initialTemperature: document.getElementById('initialTemperature'),
+            leftBoundary: document.getElementById('leftBoundary'),
+            rightBoundary: document.getElementById('rightBoundary'),
             pauseResumeButton: document.getElementById('pauseResumeButton'),
             resultDisplay: document.getElementById('result-display'),
             maxTemp: document.getElementById('max-temp'),
             avgTemp: document.getElementById('avg-temp'),
             execTime: document.getElementById('exec-time'),
-            resultImage: document.getElementById('result-image')
+            fourierNumber: document.getElementById('fourier-number'),
+            resultChart: document.getElementById('result-chart')
         };
+
+        const STATUS_LABELS = {
+            IDLE: 'Очікує запуску',
+            PENDING: 'Очікує виконання',
+            QUEUED: 'У черзі',
+            RUNNING: 'Виконується',
+            PAUSED: 'Призупинено',
+            CANCELLATION_REQUESTED: 'Скасування...',
+            COMPLETED: 'Завершено',
+            FAILED: 'Помилка',
+            CANCELLED: 'Скасовано'
+        };
+
+        function statusLabel(status) {
+            return STATUS_LABELS[status] || status || 'Невідомо';
+        }
+
+        function drawTemperatureProfile(profile) {
+            if (!ui.resultChart) return;
+            const ctx = ui.resultChart.getContext('2d');
+            const width = ui.resultChart.width;
+            const height = ui.resultChart.height;
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = '#fffafa';
+            ctx.fillRect(0, 0, width, height);
+
+            if (!Array.isArray(profile) || profile.length < 2) {
+                ctx.fillStyle = '#6b7280';
+                ctx.font = '14px Inter, sans-serif';
+                ctx.fillText('Профіль температури буде доступний після завершення.', 18, 32);
+                return;
+            }
+
+            const temps = profile.map((point) => Number(point.temperature_c));
+            const minTemp = Math.min(...temps);
+            const maxTemp = Math.max(...temps);
+            const tempRange = Math.max(1, maxTemp - minTemp);
+            const pad = 28;
+
+            ctx.strokeStyle = 'rgba(123, 15, 21, 0.14)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(pad, pad);
+            ctx.lineTo(pad, height - pad);
+            ctx.lineTo(width - pad, height - pad);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#b2222f';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            profile.forEach((point, index) => {
+                const x = pad + (index / (profile.length - 1)) * (width - pad * 2);
+                const y = height - pad - ((Number(point.temperature_c) - minTemp) / tempRange) * (height - pad * 2);
+                if (index === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            ctx.stroke();
+
+            ctx.fillStyle = '#111827';
+            ctx.font = '12px Inter, sans-serif';
+            ctx.fillText(`${maxTemp.toFixed(1)} °C`, pad + 4, pad + 12);
+            ctx.fillText(`${minTemp.toFixed(1)} °C`, pad + 4, height - pad - 8);
+            ctx.fillText('x, м', width - pad - 28, height - 8);
+        }
   
         function updateResultUI(result) {
             if (result && result.max_temperature_c !== undefined) {
@@ -147,13 +268,16 @@
                 ui.maxTemp.textContent = result.max_temperature_c;
                 ui.avgTemp.textContent = result.average_temperature_c;
                 ui.execTime.textContent = result.execution_time_seconds;
-
-                ui.resultImage.src = `https://placehold.co/400x150/10B981/ffffff?text=Max+Temp:${result.max_temperature_c}C`;
+                if (ui.fourierNumber) {
+                    ui.fourierNumber.textContent = result.fourier_number ?? 'немає';
+                }
+                drawTemperatureProfile(result.temperature_profile);
                 
                 ui.resultDisplay.classList.remove('hidden');
             } else {
 
                 ui.resultDisplay.classList.add('hidden');
+                drawTemperatureProfile([]);
             }
         }
 
@@ -167,18 +291,18 @@
 
         function normalizeTaskSnapshot(status, stage, progress, result) {
             let normalizedStatus = status || 'PENDING';
-            let normalizedStage = stage || 'Queued';
+            let normalizedStage = stage || 'У черзі';
             let normalizedProgress = Number(progress ?? 0) || 0;
             const hasFinalResult = !!(result && result.execution_time_seconds !== undefined);
 
             if (hasFinalResult) {
                 normalizedStatus = 'COMPLETED';
-                normalizedStage = '4. Done. Result Ready.';
+                normalizedStage = '4. Результат готовий';
                 normalizedProgress = 100;
             }
 
             if (normalizedStatus === 'COMPLETED') {
-                normalizedStage = normalizedStage || '4. Done. Result Ready.';
+                normalizedStage = normalizedStage || '4. Результат готовий';
                 normalizedProgress = 100;
             }
 
@@ -201,12 +325,12 @@
 
         function resetMainMonitor() {
             mainTaskId = null;
-            setStatus(null, 'IDLE', 'Ready to start', 0, null);
+            setStatus(null, 'IDLE', 'Готово до старту', 0, null);
             ui.cancelButton.disabled = true;
             ui.cancelButton.onclick = null;
             ui.pauseResumeButton.disabled = true;
             ui.pauseResumeButton.onclick = null;
-            ui.wsStatus.textContent = 'Disconnected';
+            ui.wsStatus.textContent = 'від’єднано';
             ui.wsStatus.className = 'font-bold text-gray-500';
         }
 
@@ -310,23 +434,23 @@
             ui.pauseResumeButton.onclick = async () => {
                 if (t.status === 'RUNNING') {
                     const ok = await pauseTaskApi(taskId);
-                    if (ok) { t.status = 'PAUSED'; ui.pauseResumeButton.textContent = 'Resume'; }
+                    if (ok) { t.status = 'PAUSED'; ui.pauseResumeButton.textContent = 'Відновити'; }
                 } else if (t.status === 'PAUSED') {
                     const ok = await resumeTaskApi(taskId);
-                    if (ok) { t.status = 'RUNNING'; ui.pauseResumeButton.textContent = 'Stop'; }
+                    if (ok) { t.status = 'RUNNING'; ui.pauseResumeButton.textContent = 'Призупинити'; }
                 }
             };
-            setStatus(taskId, t.status || 'PENDING', t.stage || 'Queued', t.progress || 0, t.result || null, t.workerId || null);
-            syncTaskSocketState(taskId, t.socketStateText || 'Disconnected', t.socketStateClass || 'font-bold text-gray-500');
+            setStatus(taskId, t.status || 'PENDING', t.stage || 'У черзі', t.progress || 0, t.result || null, t.workerId || null);
+            syncTaskSocketState(taskId, t.socketStateText || 'від’єднано', t.socketStateClass || 'font-bold text-gray-500');
         }
 
 
         function setStatus(id, status, stage, progress, result = null, worker_id = null) {
             const normalized = normalizeTaskSnapshot(status, stage, progress, result);
-            ui.taskId.textContent = id || 'N/A';
-            ui.taskStatus.textContent = normalized.status;
+            ui.taskId.textContent = id || 'немає';
+            ui.taskStatus.textContent = statusLabel(normalized.status);
             ui.taskStage.textContent = normalized.stage;
-            ui.taskWorker.textContent = worker_id || 'N/A';
+            ui.taskWorker.textContent = worker_id || 'не призначено';
             if (worker_id) {
                 ui.taskWorker.className = worker_id === 'api1' ? 'font-semibold text-green-600' : 'font-semibold text-blue-600';
             } else {
@@ -351,9 +475,9 @@
                 if (!id || normalized.status === 'COMPLETED' || normalized.status === 'FAILED' || normalized.status === 'CANCELLED') {
                     ui.pauseResumeButton.disabled = true;
                 } else if (normalized.status === 'RUNNING') {
-                    ui.pauseResumeButton.disabled = false; ui.pauseResumeButton.textContent = 'Stop';
+                    ui.pauseResumeButton.disabled = false; ui.pauseResumeButton.textContent = 'Призупинити';
                 } else if (normalized.status === 'PAUSED') {
-                    ui.pauseResumeButton.disabled = false; ui.pauseResumeButton.textContent = 'Resume';
+                    ui.pauseResumeButton.disabled = false; ui.pauseResumeButton.textContent = 'Відновити';
                 } else {
                     ui.pauseResumeButton.disabled = true;
                 }
@@ -453,14 +577,14 @@
                     }
                     const socket = new WebSocket(WS_BASE_URL + '/ws/' + taskId);
                     tasksMap[taskId].ws = socket;
-                    tasksMap[taskId].socketStateText = 'Connecting...';
+                    tasksMap[taskId].socketStateText = 'підключення...';
                     tasksMap[taskId].socketStateClass = 'font-bold text-yellow-500';
-                    syncTaskSocketState(taskId, 'Connecting...', 'font-bold text-yellow-500');
+                    syncTaskSocketState(taskId, 'підключення...', 'font-bold text-yellow-500');
 
                     socket.onopen = () => {
-                        tasksMap[taskId].socketStateText = 'Connected';
+                        tasksMap[taskId].socketStateText = 'підключено';
                         tasksMap[taskId].socketStateClass = 'font-bold text-green-600';
-                        syncTaskSocketState(taskId, 'Connected', 'font-bold text-green-600');
+                        syncTaskSocketState(taskId, 'підключено', 'font-bold text-green-600');
                     };
 
                     socket.onmessage = (event) => {
@@ -475,9 +599,9 @@
 
                     socket.onclose = () => {
                         if (!tasksMap[taskId]) return;
-                        tasksMap[taskId].socketStateText = 'Disconnected';
+                        tasksMap[taskId].socketStateText = 'від’єднано';
                         tasksMap[taskId].socketStateClass = 'font-bold text-gray-500';
-                        syncTaskSocketState(taskId, 'Disconnected', 'font-bold text-gray-500');
+                        syncTaskSocketState(taskId, 'від’єднано', 'font-bold text-gray-500');
                         if (!isTerminalStatus(tasksMap[taskId].status)) {
                             refreshTaskFromApi(taskId);
                         }
@@ -485,9 +609,9 @@
 
                     socket.onerror = (err) => {
                         console.error('WS error', err);
-                        tasksMap[taskId].socketStateText = 'Error';
+                        tasksMap[taskId].socketStateText = 'помилка';
                         tasksMap[taskId].socketStateClass = 'font-bold text-red-600';
-                        syncTaskSocketState(taskId, 'Error', 'font-bold text-red-600');
+                        syncTaskSocketState(taskId, 'помилка', 'font-bold text-red-600');
                         refreshTaskFromApi(taskId);
                     };
                 } catch(e) {
@@ -499,13 +623,25 @@
         async function startTask() {
             ui.messageBox.textContent = '';
             ui.startButton.disabled = true;
-            setStatus(null, 'IDLE', 'Requesting start...', 0, null); 
+            setStatus(null, 'IDLE', 'Надсилання параметрів задачі...', 0, null); 
             
             const nodes = parseInt(ui.nodes.value);
             const iterations = parseInt(ui.iterations.value);
+            const rod_length_m = parseFloat(ui.rodLength.value);
+            const total_time_s = parseFloat(ui.totalTime.value);
+            const thermal_diffusivity = parseFloat(ui.thermalDiffusivity.value);
+            const initial_temperature_c = parseFloat(ui.initialTemperature.value);
+            const left_boundary_c = parseFloat(ui.leftBoundary.value);
+            const right_boundary_c = parseFloat(ui.rightBoundary.value);
 
             if (nodes > 100000) {
                 ui.messageBox.textContent = 'Помилка: Кількість вузлів перевищує ліміт (100,000)!';
+                ui.startButton.disabled = false;
+                return;
+            }
+
+            if ([nodes, iterations, rod_length_m, total_time_s, thermal_diffusivity, initial_temperature_c, left_boundary_c, right_boundary_c].some((value) => Number.isNaN(value))) {
+                ui.messageBox.textContent = 'Помилка: заповніть усі числові параметри моделі.';
                 ui.startButton.disabled = false;
                 return;
             }
@@ -518,7 +654,16 @@
                     method: 'POST',
                     headers,
                     cache: 'no-store',
-                    body: JSON.stringify({ nodes, iterations })
+                    body: JSON.stringify({
+                        nodes,
+                        iterations,
+                        rod_length_m,
+                        total_time_s,
+                        thermal_diffusivity,
+                        initial_temperature_c,
+                        left_boundary_c,
+                        right_boundary_c
+                    })
                 });
 
                 const data = await response.json();
@@ -529,18 +674,18 @@
                     addTaskCard(taskId, data.status, assignToMain);
                     rememberTask(taskId);
                     connectWebSocket(taskId);
-                    ui.messageBox.textContent = 'Завдання успішно відправлено! Connecting WS...';
+                    ui.messageBox.textContent = 'Задачу створено. Підключаю моніторинг прогресу...';
                 } else if (response.status === 400) {
                     ui.messageBox.textContent = `Помилка API: ${data.detail}`;
-                    setStatus(null, 'IDLE', 'Validation failed', 0, null);
+                    setStatus(null, 'IDLE', 'Параметри не пройшли перевірку', 0, null);
                 } else {
                     ui.messageBox.textContent = 'Невідома помилка при запуску завдання.';
                 }
 
             } catch (error) {
                 console.error("Fetch Error:", error);
-                ui.messageBox.textContent = 'Помилка мережі. Перевірте, чи запущений Uvicorn сервер.';
-                setStatus(null, 'IDLE', 'Network Error', 0, null);
+                ui.messageBox.textContent = 'Помилка мережі. Перевірте, чи запущено сервер застосунку.';
+                setStatus(null, 'IDLE', 'Помилка мережі', 0, null);
             } finally {
                 ui.startButton.disabled = false;
             }
@@ -557,7 +702,7 @@
                 const response = await fetch(`${API_TASKS_URL}/${taskId}/cancel`, { method: 'POST', headers });
                 const data = await response.json().catch(()=>({message:'cancel request sent'}));
                 if (response.ok) {
-                    ui.messageBox.textContent = data.message || 'Cancel requested';
+                    ui.messageBox.textContent = data.message || 'Надіслано запит на скасування.';
                 } else {
                     ui.messageBox.textContent = `Помилка скасування: ${data.message || data.detail}`;
                 }
@@ -592,14 +737,14 @@
             if (isMain) {
                 mainTaskId = taskId;
                 if (!tasksMap[taskId]) {
-                    tasksMap[taskId] = { ws: null, status: initialStatus, stage: 'Starting...', progress: 0, result: null, workerId: null, elements: null };
+                    tasksMap[taskId] = { ws: null, status: initialStatus, stage: 'Запуск задачі...', progress: 0, result: null, workerId: null, elements: null };
                 }
 
                 ui.taskId.textContent = taskId;
-                ui.taskStatus.textContent = initialStatus;
+                ui.taskStatus.textContent = statusLabel(initialStatus);
                 ui.cancelButton.disabled = false;
                 ui.cancelButton.onclick = () => cancelTask(taskId);
-                setStatus(taskId, initialStatus, 'Starting...', 0, null);
+                setStatus(taskId, initialStatus, 'Запуск задачі...', 0, null);
                 return;
             }
 
@@ -607,13 +752,13 @@
             card.className = 'task-card';
             card.dataset.taskId = taskId;
             const meta = document.createElement('div'); meta.className='task-meta';
-            const title = document.createElement('div'); title.innerHTML = `<strong>Task:</strong> <span class="font-mono">${taskId}</span>`;
+            const title = document.createElement('div'); title.innerHTML = `<strong>Задача:</strong> <span class="font-mono">${taskId}</span>`;
             const right = document.createElement('div');
-            const wsStatus = document.createElement('span'); wsStatus.textContent='Connecting...'; wsStatus.className='font-bold text-yellow-500';
-            const collapseBtn = document.createElement('button'); collapseBtn.className='btn btn-ghost'; collapseBtn.textContent='▾'; collapseBtn.title='Collapse/Expand'; collapseBtn.style.marginLeft='8px';
-            const stopResumeBtn = document.createElement('button'); stopResumeBtn.className='btn btn-ghost'; stopResumeBtn.textContent='Stop'; stopResumeBtn.style.marginLeft='8px';
-            const cancelBtn = document.createElement('button'); cancelBtn.className='btn btn-danger'; cancelBtn.textContent='Cancel';
-            const closeBtn = document.createElement('button'); closeBtn.className='btn btn-ghost task-close-btn'; closeBtn.textContent='×'; closeBtn.title='Hide this card';
+            const wsStatus = document.createElement('span'); wsStatus.textContent='підключення...'; wsStatus.className='font-bold text-yellow-500';
+            const collapseBtn = document.createElement('button'); collapseBtn.className='btn btn-ghost'; collapseBtn.textContent='▾'; collapseBtn.title='Згорнути або розгорнути'; collapseBtn.style.marginLeft='8px';
+            const stopResumeBtn = document.createElement('button'); stopResumeBtn.className='btn btn-ghost'; stopResumeBtn.textContent='Призупинити'; stopResumeBtn.style.marginLeft='8px';
+            const cancelBtn = document.createElement('button'); cancelBtn.className='btn btn-danger'; cancelBtn.textContent='Скасувати';
+            const closeBtn = document.createElement('button'); closeBtn.className='btn btn-ghost task-close-btn'; closeBtn.textContent='×'; closeBtn.title='Приховати картку';
             cancelBtn.addEventListener('click', ()=>cancelTask(taskId));
             closeBtn.addEventListener('click', (ev) => {
                 ev.stopPropagation();
@@ -630,10 +775,10 @@
             const progressWrap = document.createElement('div'); progressWrap.className='progress-wrap';
             progressWrap.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div id="pt-${taskId}" style="font-weight:700;color:var(--accent-2);">0%</div><div style="font-size:0.9rem;color:var(--muted)"></div></div><div style="flex:1"><div class="w-full bg-gray-200 rounded-full h-3.5"><div id="pb-${taskId}" class="bg-blue-500 h-3.5 rounded-full" style="width:0%"></div></div></div>`;
 
-            const stage = document.createElement('div'); stage.className='text-sm'; stage.textContent='Queued';
+            const stage = document.createElement('div'); stage.className='text-sm'; stage.textContent='У черзі';
             
             const workerInfo = document.createElement('div'); workerInfo.className='text-sm'; workerInfo.style.marginTop='4px';
-            workerInfo.innerHTML = '<strong>Worker:</strong> <span class="font-semibold text-gray-400">N/A</span>';
+            workerInfo.innerHTML = '<strong>Виконавець:</strong> <span class="font-semibold text-gray-400">не призначено</span>';
             const workerSpan = workerInfo.querySelector('span');
 
             card.appendChild(meta); card.appendChild(progressWrap); card.appendChild(stage); card.appendChild(workerInfo);
@@ -641,7 +786,7 @@
 
             const progressBarEl = document.getElementById('pb-'+taskId);
             const progressTextEl = document.getElementById('pt-'+taskId);
-            tasksMap[taskId] = { ws: null, status: initialStatus, stage: 'Queued', progress: 0, result: null, workerId: null, collapsed: false, socketStateText: 'Connecting...', socketStateClass: 'font-bold text-yellow-500', elements: { card, title, wsStatus, cancelBtn, stopResumeBtn, collapseBtn, closeBtn, progressBar: progressBarEl, progressText: progressTextEl, stage, worker: workerSpan } };
+            tasksMap[taskId] = { ws: null, status: initialStatus, stage: 'У черзі', progress: 0, result: null, workerId: null, collapsed: false, socketStateText: 'підключення...', socketStateClass: 'font-bold text-yellow-500', elements: { card, title, wsStatus, cancelBtn, stopResumeBtn, collapseBtn, closeBtn, progressBar: progressBarEl, progressText: progressTextEl, stage, worker: workerSpan } };
 
             collapseBtn.addEventListener('click', (ev)=>{
                 ev.stopPropagation();
@@ -662,11 +807,11 @@
                 if (tasksMap[taskId].status === 'RUNNING') {
                     await pauseTaskApi(taskId);
                     tasksMap[taskId].status = 'PAUSED';
-                    stopResumeBtn.textContent = 'Resume';
+                    stopResumeBtn.textContent = 'Відновити';
                 } else if (tasksMap[taskId].status === 'PAUSED') {
                     await resumeTaskApi(taskId);
                     tasksMap[taskId].status = 'RUNNING';
-                    stopResumeBtn.textContent = 'Stop';
+                    stopResumeBtn.textContent = 'Призупинити';
                 }
             });
 
@@ -674,7 +819,7 @@
                 promoteToMain(taskId);
             });
 
-            updateTaskCard(taskId, initialStatus, 'Queued', 0, null);
+            updateTaskCard(taskId, initialStatus, 'У черзі', 0, null);
         }
 
         function updateTaskCard(taskId, status, stage, progress, result, worker_id = null){
@@ -692,7 +837,7 @@
 
             // Update worker display in task card if element exists
             if (el && el.worker) {
-                el.worker.textContent = worker_id || 'N/A';
+                el.worker.textContent = worker_id || 'не призначено';
                 if (worker_id === 'api1') {
                     el.worker.className = 'font-semibold text-green-600';
                 } else if (worker_id === 'api2') {
@@ -707,7 +852,7 @@
 
             if (normalized.status === 'COMPLETED') {
                 forgetTask(taskId);
-                syncTaskSocketState(taskId, 'Completed', 'font-bold text-green-600');
+                syncTaskSocketState(taskId, 'завершено', 'font-bold text-green-600');
                 if (el && el.cancelBtn) el.cancelBtn.disabled = true;
                 if (el && el.stopResumeBtn) el.stopResumeBtn.disabled = true;
                 if (t.ws && t.ws.readyState !== WebSocket.CLOSED) {
@@ -721,7 +866,7 @@
                         sum.style.marginTop = '8px';
                         el.card.appendChild(sum);
                     }
-                    sum.innerHTML = `<strong>Max:</strong> ${normalized.result.max_temperature_c} C — <strong>Avg:</strong> ${normalized.result.average_temperature_c} C`;
+                    sum.innerHTML = `<strong>Макс.:</strong> ${normalized.result.max_temperature_c} °C — <strong>Середня:</strong> ${normalized.result.average_temperature_c} °C`;
                 }
                 if (taskId === mainTaskId) {
                     setStatus(taskId, normalized.status, normalized.stage, normalized.progress, normalized.result, worker_id);
@@ -729,7 +874,7 @@
                 }
             } else if (normalized.status === 'FAILED' || normalized.status === 'CANCELLED') {
                 forgetTask(taskId);
-                syncTaskSocketState(taskId, normalized.status, 'font-bold text-red-600');
+                syncTaskSocketState(taskId, statusLabel(normalized.status).toLowerCase(), 'font-bold text-red-600');
                 if (el && el.cancelBtn) el.cancelBtn.disabled=true;
                 if (el && el.stopResumeBtn) el.stopResumeBtn.disabled = true;
                 if (taskId === mainTaskId) {
@@ -737,7 +882,7 @@
                     ensureMainTaskAssigned();
                 }
             } else {
-                syncTaskSocketState(taskId, normalized.status, normalized.status === 'PAUSED' ? 'font-bold text-gray-500' : 'font-bold text-yellow-600');
+                syncTaskSocketState(taskId, statusLabel(normalized.status).toLowerCase(), normalized.status === 'PAUSED' ? 'font-bold text-gray-500' : 'font-bold text-yellow-600');
                 if (taskId === mainTaskId) setStatus(taskId, normalized.status, normalized.stage, normalized.progress, normalized.result, worker_id);
             }
             storeActiveTasks();
@@ -823,17 +968,15 @@
                 if (completedTask) {
                     const result = completedTask.result;
 
-                    let resultText = `\n\n--- Результат (Task ${completedTask.task_id}) ---\n`;
+                    let resultText = `\n\n--- Результат задачі ${completedTask.task_id} ---\n`;
                     resultText += `Максимальна Температура (C): ${result.max_temperature_c}\n`;
                     resultText += `Середня Температура (C): ${result.average_temperature_c}\n`;
                     resultText += `Розмір Сітки: ${result.grid_dimensions}\n`;
                     resultText += `Час обчислення: ${result.execution_time_seconds} сек\n`;
+                    resultText += `Крайові умови: T(0,t)=${result.left_boundary_c} C, T(L,t)=${result.right_boundary_c} C\n`;
 
                     const resultHtml = `
-                        <h3 class="text-xl font-semibold mt-4 mb-2 text-green-700">Візуалізація Теплового Поля</h3>
-                        <img src="https://placehold.co/400x150/10B981/ffffff?text=Max+Temp:${result.max_temperature_c}C" 
-                             alt="Thermal Simulation Result" 
-                             class="rounded-lg mb-4 border border-green-600 mx-auto"/>
+                        <h3 class="text-xl font-semibold mt-4 mb-2 text-green-700">Чисельний результат теплопровідності</h3>
                     `;
 
                     ui.historyOutput.innerHTML = resultHtml + `<pre class="p-0 m-0">${resultText + output}</pre>`;
@@ -855,7 +998,7 @@
         }
 
                 window.onload = () => {
-                        setStatus(null, 'IDLE', 'Ready to start', 0, null);
+                        setStatus(null, 'IDLE', 'Готово до старту', 0, null);
                         startStatusPolling();
                         restoreActiveTasks();
                 };
@@ -871,7 +1014,7 @@
                 const userInfo = document.getElementById('userInfo');
                 const appHeaderAvatar = document.getElementById('appHeaderAvatar');
                 const appHeaderUsername = document.getElementById('appHeaderUsername');
-                const currentUsername = sessionStorage.getItem('hf_username') || 'unknown';
+                const currentUsername = sessionStorage.getItem('hf_username') || 'користувач';
                 if (appHeaderUsername) {
                     appHeaderUsername.textContent = currentUsername;
                 }
@@ -879,7 +1022,7 @@
                     appHeaderAvatar.textContent = currentUsername.slice(0, 1).toUpperCase();
                 }
                 if (userInfo) {
-                    userInfo.setAttribute('aria-label', 'Current user');
+                    userInfo.setAttribute('aria-label', 'Поточний користувач');
                 }
 
                 const token = sessionStorage.getItem('hf_token');
@@ -894,7 +1037,7 @@
                             if (appHeaderAvatar) {
                                 if (profile.avatar_url) {
                                     appHeaderAvatar.classList.add('has-image');
-                                    appHeaderAvatar.innerHTML = `<img src="${profile.avatar_url}" alt="Profile photo" />`;
+                                    appHeaderAvatar.innerHTML = `<img src="${profile.avatar_url}" alt="Фото профілю" />`;
                                 } else {
                                     appHeaderAvatar.classList.remove('has-image');
                                     appHeaderAvatar.textContent = (profile.username || currentUsername).slice(0, 1).toUpperCase();

@@ -102,7 +102,7 @@ async def get_task_stats():
         "queued": queued,
         "completed": completed,
         "max_concurrent": task_manager.MAX_CONCURRENT_TASKS,
-        "queue_length": len(task_manager.task_queue),
+        "queue_length": queued,
         "estimated_wait_seconds": round(estimated_wait, 1) if estimated_wait > 0 else 0
     }
 
@@ -645,9 +645,22 @@ async def start_task(task_input: TaskInput, request: Request):
     if task_input.iterations <= 0:
         raise HTTPException(status_code=400, detail="Кількість ітерацій має бути більшою за 0.")
     username = _get_username_from_request(request)
+    simulation_parameters = {
+        "rod_length_m": task_input.rod_length_m,
+        "total_time_s": task_input.total_time_s,
+        "thermal_diffusivity": task_input.thermal_diffusivity,
+        "initial_temperature_c": task_input.initial_temperature_c,
+        "left_boundary_c": task_input.left_boundary_c,
+        "right_boundary_c": task_input.right_boundary_c,
+    }
     
     try:
-        new_task = task_manager.start_new_task(task_input.nodes, task_input.iterations, username=username)
+        new_task = task_manager.start_new_task(
+            task_input.nodes,
+            task_input.iterations,
+            username=username,
+            simulation_parameters=simulation_parameters
+        )
     except ValueError as e:
         raise HTTPException(status_code=429, detail=str(e))
     
@@ -659,11 +672,11 @@ async def start_task(task_input: TaskInput, request: Request):
 @app.post("/api/tasks/{task_id}/cancel")
 async def cancel_task(task_id: str):
     if task_manager.request_cancel(task_id):
-        return {"task_id": task_id, "status": "CANCELLATION_REQUESTED", "message": f"Cancellation requested for task {task_id}."}
+        return {"task_id": task_id, "status": "CANCELLATION_REQUESTED", "message": f"Надіслано запит на скасування задачі {task_id}."}
     status = task_manager.get_status(task_id)
     if status and status.status not in ['RUNNING', 'CANCELLATION_REQUESTED']:
-        raise HTTPException(status_code=400, detail=f"Cannot cancel task {task_id}. Current status is {status.status}.")
-    raise HTTPException(status_code=404, detail=f"Task {task_id} not found.")
+        raise HTTPException(status_code=400, detail=f"Неможливо скасувати задачу {task_id}. Поточний статус: {status.status}.")
+    raise HTTPException(status_code=404, detail=f"Задачу {task_id} не знайдено.")
 
 
 @app.post("/api/tasks/{task_id}/pause")
@@ -672,18 +685,18 @@ async def pause_task(task_id: str):
         return {"task_id": task_id, "status": "PAUSE_REQUESTED", "message": f"Pause requested for task {task_id}."}
     status = task_manager.get_status(task_id)
     if status and status.status != 'RUNNING':
-        raise HTTPException(status_code=400, detail=f"Cannot pause task {task_id}. Current status is {status.status}.")
-    raise HTTPException(status_code=404, detail=f"Task {task_id} not found.")
+        raise HTTPException(status_code=400, detail=f"Неможливо призупинити задачу {task_id}. Поточний статус: {status.status}.")
+    raise HTTPException(status_code=404, detail=f"Задачу {task_id} не знайдено.")
 
 
 @app.post("/api/tasks/{task_id}/resume")
 async def resume_task(task_id: str):
     if task_manager.request_resume(task_id):
-        return {"task_id": task_id, "status": "RESUMED", "message": f"Resume requested for task {task_id}."}
+        return {"task_id": task_id, "status": "RESUMED", "message": f"Задачу {task_id} відновлено."}
     status = task_manager.get_status(task_id)
     if status and status.status != 'PAUSED':
-        raise HTTPException(status_code=400, detail=f"Cannot resume task {task_id}. Current status is {status.status}.")
-    raise HTTPException(status_code=404, detail=f"Task {task_id} not found.")
+        raise HTTPException(status_code=400, detail=f"Неможливо відновити задачу {task_id}. Поточний статус: {status.status}.")
+    raise HTTPException(status_code=404, detail=f"Задачу {task_id} не знайдено.")
 
 
 @app.get("/api/tasks/history", response_model=TaskHistory)
@@ -696,7 +709,7 @@ async def get_history():
 async def get_task(task_id: str):
     task = task_manager.get_status(task_id)
     if not task:
-        raise HTTPException(status_code=404, detail=f"Task {task_id} not found.")
+        raise HTTPException(status_code=404, detail=f"Задачу {task_id} не знайдено.")
     return task
 
 

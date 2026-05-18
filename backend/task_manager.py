@@ -31,6 +31,25 @@ DATABASE_URL = os.getenv(
 )
 
 
+DEFAULT_SIMULATION_PARAMETERS = {
+    "rod_length_m": 1.0,
+    "total_time_s": 120.0,
+    "thermal_diffusivity": 0.000115,
+    "initial_temperature_c": 20.0,
+    "left_boundary_c": 100.0,
+    "right_boundary_c": 20.0,
+}
+
+
+def _normalize_simulation_parameters(parameters: Optional[Dict[str, Any]] = None) -> Dict[str, float]:
+    merged = dict(DEFAULT_SIMULATION_PARAMETERS)
+    if parameters:
+        for key in merged:
+            if key in parameters and parameters[key] is not None:
+                merged[key] = float(parameters[key])
+    return merged
+
+
 def _db_connect():
     import psycopg2
     return psycopg2.connect(DATABASE_URL)
@@ -70,7 +89,7 @@ class TaskManager:
                 conn = _db_connect()
                 cur = conn.cursor()
                 cur.execute(
-                    "SELECT task_id, nodes, iterations, username, status, worker_id, stage, progress, result_data "
+                    "SELECT task_id, nodes, iterations, username, status, worker_id, stage, progress, result_data, simulation_parameters "
                     "FROM task_queue WHERE task_id = %s",
                     (task_id,)
                 )
@@ -79,7 +98,8 @@ class TaskManager:
                 conn.close()
 
                 if row:
-                    result = json_module.loads(row[8]) if row[8] else None
+                    result = row[8] if isinstance(row[8], dict) else (json_module.loads(row[8]) if row[8] else None)
+                    parameters = row[9] if isinstance(row[9], dict) else (json_module.loads(row[9]) if row[9] else {})
                     task = local_task or TaskState(
                         task_id=row[0],
                         start_time=time.time(),
@@ -92,6 +112,8 @@ class TaskManager:
                     task.stage = row[6] or f"On {row[5] or 'unknown worker'}"
                     task.progress = row[7] or 0.0
                     task.result = result
+                    for key, value in _normalize_simulation_parameters(parameters).items():
+                        setattr(task, key, value)
                     self.tasks[task_id] = task
                     return task
             except Exception as e:
@@ -181,7 +203,13 @@ class TaskManager:
                         pass
                 self.active_connections.pop(task_id, None)
 
-    def start_new_task(self, nodes: int, iterations: int, username: str = None) -> TaskState:
+    def start_new_task(
+        self,
+        nodes: int,
+        iterations: int,
+        username: str = None,
+        simulation_parameters: Optional[Dict[str, Any]] = None
+    ) -> TaskState:
         
         if len(self.tasks) >= self.MAX_TASKS:
             self._cleanup_old_tasks()
@@ -190,12 +218,15 @@ class TaskManager:
         
         task_id = str(uuid.uuid4())
         
+        parameters = _normalize_simulation_parameters(simulation_parameters)
+
         new_task = TaskState(
             task_id=task_id,
             start_time=time.time(),
             nodes=nodes,
             iterations=iterations,
-            worker_id=self.WORKER_ID  # Встановлюємо worker_id одразу
+            worker_id=self.WORKER_ID,
+            **parameters
         )
         self.tasks[task_id] = new_task
         self.cancel_flags[task_id] = False
@@ -225,8 +256,9 @@ class TaskManager:
                     conn = _db_connect()
                     cur = conn.cursor()
                     cur.execute(
-                        "INSERT INTO task_queue (task_id, username, nodes, iterations, status, queued_at) VALUES (%s, %s, %s, %s, 'QUEUED', CURRENT_TIMESTAMP)",
-                        (task_id, username or 'anonymous', nodes, iterations)
+                        "INSERT INTO task_queue (task_id, username, nodes, iterations, simulation_parameters, status, stage, progress, queued_at) "
+                        "VALUES (%s, %s, %s, %s, %s, 'QUEUED', %s, 0, CURRENT_TIMESTAMP)",
+                        (task_id, username or 'anonymous', nodes, iterations, json.dumps(parameters), 'У черзі очікування')
                     )
                     conn.commit()
                     
@@ -259,8 +291,9 @@ class TaskManager:
                     conn = _db_connect()
                     cur = conn.cursor()
                     cur.execute(
-                        "INSERT INTO task_queue (task_id, username, nodes, iterations, status, worker_id, started_at) VALUES (%s, %s, %s, %s, 'RUNNING', %s, CURRENT_TIMESTAMP)",
-                        (task_id, username or 'anonymous', nodes, iterations, self.WORKER_ID)
+                        "INSERT INTO task_queue (task_id, username, nodes, iterations, simulation_parameters, status, worker_id, stage, progress, started_at) "
+                        "VALUES (%s, %s, %s, %s, %s, 'RUNNING', %s, %s, 0, CURRENT_TIMESTAMP)",
+                        (task_id, username or 'anonymous', nodes, iterations, json.dumps(parameters), self.WORKER_ID, 'Підготовка розрахунку')
                     )
                     conn.commit()
                     cur.close()
@@ -270,7 +303,7 @@ class TaskManager:
                     print(f"[{self.WORKER_ID}] Failed to save task to DB: {e}")
             
             loop = asyncio.get_event_loop()
-            loop.run_in_executor(self.executor, lambda: self.heavy_computation(task_id, nodes, iterations))
+            loop.run_in_executor(self.executor, lambda: self.heavy_computation(task_id, nodes, iterations, parameters))
         
         return new_task
 
@@ -285,7 +318,7 @@ class TaskManager:
             return False
         self.cancel_flags[task_id] = True
         task.status = 'CANCELLATION_REQUESTED'
-        task.stage = 'Cancellation requested by user'
+        task.stage = 'Користувач надіслав запит на скасування'
         print(f"[TaskManager] Cancel requested for {task_id}")
         self.send_status(task_id, task.status, task.stage, task.progress, task.result)
         return True
@@ -295,7 +328,7 @@ class TaskManager:
         if task and task.status == 'RUNNING':
             self.pause_flags[task_id] = True
             task.status = 'PAUSED'
-            task.stage = 'Paused by user'
+            task.stage = 'Обчислення призупинено користувачем'
             print(f"[TaskManager] Pause requested for {task_id}")
             self.send_status(task_id, task.status, task.stage, task.progress, task.result)
             return True
@@ -306,7 +339,7 @@ class TaskManager:
         if task and task.status == 'PAUSED':
             self.pause_flags.pop(task_id, None)
             task.status = 'RUNNING'
-            task.stage = 'Resumed'
+            task.stage = 'Обчислення відновлено'
             print(f"[TaskManager] Resume requested for {task_id}")
             self.send_status(task_id, task.status, task.stage, task.progress, task.result)
             return True
@@ -332,7 +365,7 @@ class TaskManager:
             # Відправимо початковий статус
             await websocket.send_text(json.dumps({
                 'status': 'QUEUED',
-                'stage': 'Initializing...',
+                'stage': 'Ініціалізація задачі',
                 'progress': 0.0,
                 'result': None
             }))
@@ -369,7 +402,7 @@ class TaskManager:
         
         estimated_remaining = avg_elapsed * 0.5
         
-        queue_position = len(self.task_queue)
+        queue_position = sum(1 for t in self.tasks.values() if t.status == 'QUEUED')
         slots_ahead = (queue_position - 1) // self.MAX_CONCURRENT_TASKS
         
         return estimated_remaining * (slots_ahead + 1)
@@ -397,10 +430,10 @@ class TaskManager:
                 
                 # Беремо найстарішу задачу QUEUED і помічаємо її як RUNNING для поточного worker
                 cur.execute(
-                    "UPDATE task_queue SET status = 'RUNNING', worker_id = %s, started_at = CURRENT_TIMESTAMP "
+                    "UPDATE task_queue SET status = 'RUNNING', worker_id = %s, stage = %s, progress = 0, started_at = CURRENT_TIMESTAMP "
                     "WHERE task_id = (SELECT task_id FROM task_queue WHERE status = 'QUEUED' ORDER BY queued_at LIMIT 1) "
-                    "RETURNING task_id, nodes, iterations",
-                    (self.WORKER_ID,)
+                    "RETURNING task_id, nodes, iterations, simulation_parameters",
+                    (self.WORKER_ID, 'Запуск задачі з черги')
                 )
                 row = cur.fetchone()
                 conn.commit()
@@ -411,14 +444,15 @@ class TaskManager:
                     # Черга порожня
                     break
                 
-                task_id, nodes, iterations = row
+                task_id, nodes, iterations, raw_parameters = row
+                parameters = raw_parameters if isinstance(raw_parameters, dict) else (json.loads(raw_parameters) if raw_parameters else {})
                 print(f"[{self.WORKER_ID}] Starting queued task {task_id}")
                 
                 # Якщо задача вже є локально (створена на цьому сервері), оновлюємо статус
                 task = self.tasks.get(task_id)
                 if task:
                     task.status = 'PENDING'
-                    task.stage = 'Starting from queue'
+                    task.stage = 'Запуск задачі з черги'
                 else:
                     # Задача створена на іншому сервері, створюємо локальний TaskState
                     task = TaskState(
@@ -427,7 +461,8 @@ class TaskManager:
                         nodes=nodes,
                         iterations=iterations,
                         status='PENDING',
-                        stage='Starting from queue'
+                        stage='Запуск задачі з черги',
+                        **_normalize_simulation_parameters(parameters)
                     )
                     self.tasks[task_id] = task
                     self.cancel_flags[task_id] = False
@@ -446,89 +481,128 @@ class TaskManager:
             return
         nodes = task.nodes or 10000
         iterations = task.iterations or 1000
-        self.heavy_computation(task_id, nodes, iterations)
+        parameters = {
+            key: getattr(task, key, None)
+            for key in DEFAULT_SIMULATION_PARAMETERS
+        }
+        self.heavy_computation(task_id, nodes, iterations, parameters)
 
-    def heavy_computation(self, task_id: str, nodes: int, iterations: int):
+    def heavy_computation(
+        self,
+        task_id: str,
+        nodes: int,
+        iterations: int,
+        simulation_parameters: Optional[Dict[str, Any]] = None
+    ):
         try:
             start_time = time.time()
-            matrix_size = max(8, int(math.sqrt(max(nodes, 1))))
+            parameters = _normalize_simulation_parameters(simulation_parameters)
+            computational_nodes = max(20, min(nodes, 1200))
             sample_steps = max(40, min(240, iterations))
             time_series = []
-            temp_baseline = random.uniform(50.0, 120.0)
 
-            self.set_status(task_id, 'RUNNING', "0. Started", 0.0)
-            self.set_status(task_id, 'RUNNING', "1. Mesh Initialization", 10.0)
+            length = parameters["rod_length_m"]
+            total_time = parameters["total_time_s"]
+            alpha = parameters["thermal_diffusivity"]
+            initial_temp = parameters["initial_temperature_c"]
+            left_boundary = parameters["left_boundary_c"]
+            right_boundary = parameters["right_boundary_c"]
+            dx = length / max(computational_nodes - 1, 1)
+            requested_dt = total_time / max(iterations, 1)
+            stable_dt = 0.45 * dx * dx / max(alpha, 1e-12)
+            dt = min(requested_dt, stable_dt)
+            effective_time = dt * iterations
 
-            # Build a compact field once, then iteratively relax it in batches.
-            field = np.random.rand(matrix_size, matrix_size).astype(np.float32) * temp_baseline
-            field[0, :] = temp_baseline + 180.0
-            field[-1, :] = temp_baseline * 0.55
-            field[:, 0] = temp_baseline + 95.0
-            field[:, -1] = temp_baseline * 0.75
-            kernel_bias = np.random.rand(matrix_size, matrix_size).astype(np.float32) * 0.03
+            self.set_status(task_id, 'RUNNING', "0. Старт обчислення", 0.0)
+            self.set_status(task_id, 'RUNNING', "1. Дискретизація стрижня", 10.0)
 
-            self.set_status(task_id, 'RUNNING', "2. Stiffness Matrix Assembly", 20.0)
+            field = np.full(computational_nodes, initial_temp, dtype=np.float64)
+            field[0] = left_boundary
+            field[-1] = right_boundary
+            fourier_number = alpha * dt / (dx * dx)
+
+            self.set_status(task_id, 'RUNNING', "2. Застосування початкових і крайових умов", 20.0)
             time.sleep(0.15)
 
             for step in range(1, sample_steps + 1):
                 if self.check_cancel(task_id):
                     print(f"[TaskManager] Worker observed cancel for {task_id} at step {step}")
-                    self.set_status(task_id, 'CANCELLED', 'Cancelled by user', self.tasks[task_id].progress)
+                    self.set_status(task_id, 'CANCELLED', 'Скасовано користувачем', self.tasks[task_id].progress)
                     return
                 if self.pause_flags.get(task_id):
                     print(f"[TaskManager] Worker pausing {task_id} at step {step}")
-                    self.set_status(task_id, 'PAUSED', 'Paused by user', self.tasks[task_id].progress)
+                    self.set_status(task_id, 'PAUSED', 'Обчислення призупинено користувачем', self.tasks[task_id].progress)
                     while self.pause_flags.get(task_id):
                         if self.check_cancel(task_id):
                             print(f"[TaskManager] Worker observed cancel during pause for {task_id}")
-                            self.set_status(task_id, 'CANCELLED', 'Cancelled by user', self.tasks[task_id].progress)
+                            self.set_status(task_id, 'CANCELLED', 'Скасовано користувачем', self.tasks[task_id].progress)
                             return
                         time.sleep(0.2)
                     print(f"[TaskManager] Worker resumed {task_id} at step {step}")
-                    self.set_status(task_id, 'RUNNING', 'Resumed', self.tasks[task_id].progress)
+                    self.set_status(task_id, 'RUNNING', 'Обчислення відновлено', self.tasks[task_id].progress)
 
-                # A light-weight but real numeric update that finishes reliably in Docker.
-                interior = (
-                    field[:-2, 1:-1] +
-                    field[2:, 1:-1] +
-                    field[1:-1, :-2] +
-                    field[1:-1, 2:]
-                ) * 0.25
-                interior = interior + kernel_bias[1:-1, 1:-1]
-                field[1:-1, 1:-1] = 0.82 * field[1:-1, 1:-1] + 0.18 * interior
+                previous = field.copy()
+                field[1:-1] = previous[1:-1] + fourier_number * (
+                    previous[:-2] - 2.0 * previous[1:-1] + previous[2:]
+                )
+                field[0] = left_boundary
+                field[-1] = right_boundary
 
                 simulated_iteration = max(1, int(round(step * iterations / sample_steps)))
                 progress_ratio = step / sample_steps
                 max_temp = float(np.max(field))
                 avg_temp = float(np.mean(field))
+                min_temp = float(np.min(field))
                 cpu_now = min(100.0, 24.0 + progress_ratio * 58.0 + random.uniform(-4.0, 8.0))
                 time_series.append({
                     'step': simulated_iteration,
                     'progress': round(25.0 + (75.0 * progress_ratio), 2),
-                    'temperature_c': round(max_temp, 2),
+                    'temperature_c': round(avg_temp, 2),
+                    'max_temperature_c': round(max_temp, 2),
+                    'min_temperature_c': round(min_temp, 2),
                     'cpu_percent': round(cpu_now, 2),
-                    'timestamp': round(time.time() - start_time, 2)
+                    'timestamp': round(time.time() - start_time, 2),
+                    'model_time_s': round(dt * simulated_iteration, 4)
                 })
 
                 current_progress = 25.0 + (75.0 * progress_ratio)
                 current_progress = min(100.0, current_progress)
-                current_stage = f"3. Iterative Solver ({simulated_iteration}/{iterations})"
+                current_stage = f"3. Явна різницева схема ({simulated_iteration}/{iterations})"
                 self.set_status(task_id, 'RUNNING', current_stage, round(current_progress, 2))
 
                 # Keep the UI animated and the runtime predictable.
                 time.sleep(min(0.08, 0.015 + nodes / 4000000))
 
             end_time = time.time()
-            temps = [s['temperature_c'] for s in time_series] if time_series else [float(np.max(field))]
+            temps = [s['max_temperature_c'] for s in time_series] if time_series else [float(np.max(field))]
+            sample_indices = np.linspace(0, computational_nodes - 1, min(80, computational_nodes), dtype=int)
             final_result = {
                 "max_temperature_c": round(max(temps), 2),
                 "average_temperature_c": round(float(np.mean(field)), 2),
+                "min_temperature_c": round(float(np.min(field)), 2),
                 "execution_time_seconds": round(end_time - start_time, 2),
-                "grid_dimensions": f"{matrix_size}x{matrix_size}",
+                "grid_dimensions": f"{computational_nodes} вузлів",
+                "requested_nodes": nodes,
+                "iterations": iterations,
+                "rod_length_m": length,
+                "total_time_s": total_time,
+                "effective_model_time_s": round(effective_time, 4),
+                "thermal_diffusivity": alpha,
+                "initial_temperature_c": initial_temp,
+                "left_boundary_c": left_boundary,
+                "right_boundary_c": right_boundary,
+                "fourier_number": round(float(fourier_number), 6),
+                "temperature_profile": [
+                    {
+                        "x_m": round(float(index * dx), 6),
+                        "temperature_c": round(float(field[index]), 2)
+                    }
+                    for index in sample_indices
+                ],
                 "time_series": time_series
             }
 
-            self.set_status(task_id, 'COMPLETED', '4. Done. Result Ready.', 100.0, final_result)
+            self.set_status(task_id, 'COMPLETED', '4. Результат готовий', 100.0, final_result)
 
             task = self.tasks.get(task_id)
             if task and task.owner:
@@ -543,7 +617,8 @@ class TaskManager:
                             iterations=iterations,
                             computation_time=computation_time,
                             final_avg_temp=final_result.get('max_temperature_c', 0.0),
-                            result_data=final_result
+                            result_data=final_result,
+                            simulation_parameters=parameters
                         )
                     else:
                         accounts = load_accounts()
@@ -564,7 +639,7 @@ class TaskManager:
                     pass
 
         except Exception as e:
-            self.set_status(task_id, 'FAILED', f'Fatal Error: {str(e)}', 100.0)
+            self.set_status(task_id, 'FAILED', f'Помилка обчислення: {str(e)}', 100.0)
         finally:
             # Запускаємо наступну задачу з черги
             self._process_queue()
