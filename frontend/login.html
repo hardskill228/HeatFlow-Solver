@@ -6,11 +6,19 @@
   <title>HeatFlow Solver — вхід</title>
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
-<body>
-  <main class="login-container">
+<body class="auth-page">
+  <main id="authRoot" class="login-container">
     <form id="loginForm" class="login-box" autocomplete="off">
-      <h1 id="authTitle">Вхід</h1>
-      <p id="authSubtitle" class="auth-subtitle">Увійдіть в обліковий запис, щоб запускати розрахунки теплопровідності.</p>
+      <div class="auth-card-head">
+        <h1 id="authTitle">Вхід</h1>
+        <p id="authSubtitle" class="auth-subtitle">Увійдіть в обліковий запис, щоб запускати розрахунки теплопровідності.</p>
+      </div>
+
+      <div class="auth-tabs" aria-label="Режим автентифікації">
+        <button type="button" id="loginModeBtn" class="auth-tab is-active">Вхід</button>
+        <button type="button" id="registerBtn" class="auth-tab">Реєстрація</button>
+      </div>
+
       <label class="field">
         <span>Ім'я користувача</span>
         <small class="field-help">Це ім'я видно в застосунку та рейтингу.</small>
@@ -22,10 +30,10 @@
         <input id="password" name="password" type="password" autocomplete="current-password" required />
       </label>
 
-      <section id="registerDetails" class="register-details is-hidden">
+      <section id="registerDetails" class="register-details is-hidden" aria-hidden="true">
         <div class="register-details-head">
-          <h2>Дані реєстрації</h2>
-          <p>Додаткова інформація для нового профілю.</p>
+          <h2>Створення акаунта</h2>
+          <p>Підтвердьте пароль. Решту даних можна додати зараз або пізніше у профілі.</p>
         </div>
 
         <label class="field">
@@ -33,7 +41,11 @@
           <input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" placeholder="Повторіть пароль" />
         </label>
 
-        <div class="register-grid">
+        <button type="button" id="profileDetailsToggle" class="profile-details-toggle" aria-expanded="false" aria-controls="profileDetailsFields">
+          Додати фото та контактні дані
+        </button>
+
+        <div id="profileDetailsFields" class="register-grid profile-details-fields is-collapsed">
           <label class="field">
             <span>Ім'я</span>
             <small class="field-help">Ваше справжнє ім'я або зручне відображуване ім'я.</small>
@@ -79,26 +91,29 @@
       </div>
 
       <div class="auth-switch">
-        <p id="authSwitchText">Вперше тут? Створіть обліковий запис із додатковими даними.</p>
-        <button type="button" id="registerBtn" class="btn btn-accent-alt auth-switch-btn">Зареєструватись</button>
+        <p id="authSwitchText">Вперше тут? Перейдіть на вкладку реєстрації.</p>
       </div>
 
       <p id="error" class="error" aria-live="polite"></p>
 
-      <p class="note">Для демонстрації можна використати створений акаунт або користувача admin з паролем admin.</p>
     </form>
   </main>
 
   <script>
   document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("loginForm");
+    const authRoot = document.getElementById("authRoot");
     const err = document.getElementById("error");
     const registerDetails = document.getElementById("registerDetails");
+    const loginModeBtn = document.getElementById("loginModeBtn");
     const registerBtn = document.getElementById("registerBtn");
     const loginBtn = document.getElementById("loginBtn");
     const authTitle = document.getElementById("authTitle");
     const authSubtitle = document.getElementById("authSubtitle");
     const authSwitchText = document.getElementById("authSwitchText");
+    const profileDetailsToggle = document.getElementById("profileDetailsToggle");
+    const profileDetailsFields = document.getElementById("profileDetailsFields");
+    const passwordInput = document.getElementById("password");
     const registerAvatarInput = document.getElementById("registerAvatar");
     const registerAvatarBtn = document.getElementById("registerAvatarBtn");
     const registerAvatarName = document.getElementById("registerAvatarName");
@@ -129,16 +144,26 @@
     function setMode(nextMode) {
       isRegisterMode = nextMode === 'register';
       form.classList.toggle('mode-register', isRegisterMode);
+      authRoot.classList.toggle('register-mode', isRegisterMode);
       registerDetails.classList.toggle('is-hidden', !isRegisterMode);
+      registerDetails.setAttribute('aria-hidden', String(!isRegisterMode));
+      loginModeBtn.classList.toggle('is-active', !isRegisterMode);
+      registerBtn.classList.toggle('is-active', isRegisterMode);
+      loginModeBtn.setAttribute('aria-pressed', String(!isRegisterMode));
+      registerBtn.setAttribute('aria-pressed', String(isRegisterMode));
       authTitle.textContent = isRegisterMode ? 'Створення акаунта' : 'Вхід';
       authSubtitle.textContent = isRegisterMode
-        ? 'Заповніть основні поля та, за потреби, додайте дані профілю.'
+        ? 'Вкажіть ім’я користувача та пароль. Дані профілю можна заповнити окремо.'
         : 'Увійдіть в обліковий запис, щоб запускати розрахунки теплопровідності.';
       loginBtn.textContent = isRegisterMode ? 'Створити акаунт' : 'Далі';
-      registerBtn.textContent = isRegisterMode ? 'Назад до входу' : 'Зареєструватись';
+      passwordInput.setAttribute('autocomplete', isRegisterMode ? 'new-password' : 'current-password');
       authSwitchText.textContent = isRegisterMode
-        ? 'Вже маєте акаунт? Поверніться до входу.'
-        : 'Вперше тут? Створіть обліковий запис із додатковими даними.';
+        ? 'Вже маєте акаунт? Перейдіть на вкладку входу.'
+        : 'Вперше тут? Перейдіть на вкладку реєстрації.';
+      if (!isRegisterMode) {
+        profileDetailsFields.classList.add('is-collapsed');
+        profileDetailsToggle.setAttribute('aria-expanded', 'false');
+      }
       err.textContent = '';
       err.style.color = '';
     }
@@ -184,9 +209,9 @@
             err.textContent = json.detail || 'Не вдалося зареєструвати акаунт';
             return;
           }
-          err.style.color = 'lightgreen';
-          err.textContent = 'Акаунт створено. Тепер увійдіть.';
           setMode('login');
+          err.style.color = '#15803d';
+          err.textContent = 'Акаунт створено. Тепер увійдіть.';
           return;
         } catch (e) {
           err.textContent = 'Помилка мережі';
@@ -213,8 +238,17 @@
       }
     });
 
+    loginModeBtn.addEventListener('click', () => {
+      setMode('login');
+    });
+
     registerBtn.addEventListener('click', () => {
-      setMode(isRegisterMode ? 'login' : 'register');
+      setMode('register');
+    });
+
+    profileDetailsToggle.addEventListener('click', () => {
+      const isCollapsed = profileDetailsFields.classList.toggle('is-collapsed');
+      profileDetailsToggle.setAttribute('aria-expanded', String(!isCollapsed));
     });
 
     registerAvatarBtn.addEventListener('click', () => {
